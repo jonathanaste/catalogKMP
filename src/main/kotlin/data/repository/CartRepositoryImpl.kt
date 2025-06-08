@@ -1,4 +1,4 @@
-package data.repository
+package com.example.data.repository
 
 import com.example.data.model.CartItemsTable
 import com.example.data.model.ItemCarrito

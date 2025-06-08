@@ -1,42 +1,37 @@
-### 1. Iniciar sesión para obtener un token de autenticación
-# Asegúrate de que este usuario ya esté registrado en tu base de datos.
-# Si no, ejecuta primero la petición de registro.
+### 1. Registrar un nuevo usuario de prueba
+# Usamos una variable de timestamp para generar un email único cada vez que ejecutamos el test
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "email": "test.koin@example.com",
+  "password": "password123",
+  "name": "Usuario Koin"
+}
+
+### SEPARADOR ###
+
+### 2. Iniciar sesión con el usuario recién creado
+# Esta petición fallará si la de registro no se ha ejecutado antes
 POST http://localhost:8080/auth/login
 Content-Type: application/json
 
 {
-  "email": "test-ide@example.com",
+  "email": "test.koin@example.com",
   "password": "password123"
 }
 
 > {%
+    // Este script se ejecuta después de la petición.
+    // Captura el token de la respuesta y lo guarda en una variable global
+    // llamada 'auth_token' para poder usarlo en las siguientes peticiones.
     client.global.set("auth_token", response.body.token);
 %}
 
 ### SEPARADOR ###
 
-### 2. Crear un nuevo producto (requiere token)
-# Esta petición usará automáticamente el 'auth_token' que guardamos en el paso anterior.
-POST http://localhost:8080/admin/productos
+### 3. Probar una ruta protegida (ej. obtener el carrito)
+# Esta petición usará el token que guardamos en el paso anterior.
+# Si funciona, significa que el login y la generación de JWT también son correctos.
+GET http://localhost:8080/carrito
 Authorization: Bearer {{auth_token}}
-Content-Type: application/json
-
-{
-  "name": "Sérum Facial Vitamina C",
-  "description": "Potente sérum antioxidante para una piel luminosa y uniforme. Ideal para todo tipo de piel.",
-  "price": 2500.0,
-  "mainImageUrl": "https://example.com/images/serum_vit_c.jpg",
-  "categoryId": "cat01",
-  "inStock": true
-}
-
-### 1. Crear la categoría ANTES de crear el producto
-POST http://localhost:8080/admin/categorias
-Content-Type: application/json
-# No necesitas token para esta ruta por ahora, según nuestra configuración actual
-
-{
-  "id": "cat01",
-  "name": "Cuidado Facial",
-  "imageUrl": "https://example.com/images/cuidado_facial.jpg"
-}

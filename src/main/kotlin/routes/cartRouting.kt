@@ -1,17 +1,18 @@
 package com.example.routes
 
 import com.example.data.model.ItemCarrito
-import data.repository.CartRepository
-import data.repository.CartRepositoryImpl
+import com.example.data.repository.CartRepository
 import io.ktor.http.*
+import io.ktor.server.application.call
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
 
 fun Route.cartRouting() {
-    val repository: CartRepository = CartRepositoryImpl()
+    val repository: CartRepository by inject()
 
     authenticate("auth-jwt") {
         route("/carrito") {

@@ -2,17 +2,19 @@ package routes
 
 import com.example.data.model.Category
 import com.example.data.repository.CategoryRepository
-import com.example.data.repository.CategoryRepositoryImpl
 import io.ktor.http.*
+import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
+import kotlin.getValue
 
 fun Route.categoryRouting() {
-    val repository: CategoryRepository = CategoryRepositoryImpl()
+    val repository: CategoryRepository by inject()
 
     route("/categorias") {
         // GET /categorias - Público

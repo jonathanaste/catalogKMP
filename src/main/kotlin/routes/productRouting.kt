@@ -3,19 +3,20 @@ package routes
 import com.example.data.model.ProductRequest
 import com.example.data.model.Product
 import com.example.data.repository.ProductRepository
-import com.example.data.repository.ProductRepositoryImpl
 import io.ktor.http.*
+import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
 import java.util.UUID
 
 fun Route.productRouting() {
     // Instanciamos el repositorio. En una app más grande, usaríamos inyección de dependencias (Koin).
-    val repository: ProductRepository = ProductRepositoryImpl()
+    val repository: ProductRepository by inject()
 
     route("/productos") {
         // GET /productos - Obtener todos los productos 

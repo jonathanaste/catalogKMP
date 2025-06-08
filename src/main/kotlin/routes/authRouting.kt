@@ -3,15 +3,17 @@ package com.example.routes
 import com.example.data.model.LoginRequest
 import com.example.data.model.RegisterRequest
 import com.example.data.repository.UserRepository
-import com.example.data.repository.UserRepositoryImpl
 import io.ktor.http.*
+import io.ktor.server.application.call
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
 import security.TokenProvider
+import kotlin.getValue
 
 fun Route.authRouting(tokenProvider: TokenProvider) {
-    val repository: UserRepository = UserRepositoryImpl()
+    val repository: UserRepository by inject()
 
     route("/auth") {
         // POST /auth/register

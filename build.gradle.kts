@@ -1,10 +1,11 @@
 val kotlin_version: String by project
 val logback_version: String by project
+val koin_version: String by project
 
 plugins {
-    kotlin("jvm") version "2.1.10"
-    id("io.ktor.plugin") version "3.1.3"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.10"
+    kotlin("jvm") version "2.0.0"
+    id("io.ktor.plugin") version "2.3.12"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
 }
 
 group = "com.example"
@@ -41,4 +42,9 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
 
     implementation("io.ktor:ktor-server-auth-jwt")
+
+    // Koin para Ktor
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+// Koin para logging (buena práctica)
+    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 }

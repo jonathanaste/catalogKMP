@@ -1,18 +1,19 @@
 package com.example.routes
 
-import data.repository.CartRepository
-import data.repository.CartRepositoryImpl
-import data.repository.OrderRepository
-import data.repository.OrderRepositoryImpl
+import com.example.data.repository.CartRepository
+import com.example.data.repository.OrderRepository
 import io.ktor.http.*
+import io.ktor.server.application.call
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
+import kotlin.getValue
 
 fun Route.orderRouting() {
-    val orderRepository: OrderRepository = OrderRepositoryImpl()
-    val cartRepository: CartRepository = CartRepositoryImpl()
+    val orderRepository: OrderRepository by inject()
+    val cartRepository: CartRepository by inject()
 
     authenticate("auth-jwt") {
         route("/pedidos") {
