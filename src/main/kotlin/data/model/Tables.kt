@@ -59,3 +59,17 @@ object OrderItemsTable : Table("order_items") {
 
     override val primaryKey = PrimaryKey(id)
 }
+
+// Tabla para los ítems del carrito de compras
+object CartItemsTable : Table("cart_items") {
+    val id = integer("id").autoIncrement()
+    val userId = varchar("user_id", 128).references(UsersTable.id)
+    val productId = varchar("product_id", 128).references(ProductsTable.id)
+    val quantity = integer("quantity")
+
+    override val primaryKey = PrimaryKey(id)
+    // Creamos un índice único para asegurar que no haya productos duplicados por usuario
+    init {
+        uniqueIndex(userId, productId)
+    }
+}

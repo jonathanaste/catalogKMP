@@ -1,5 +1,6 @@
 package com.example.plugins
 
+import com.example.data.model.CartItemsTable
 import com.example.data.model.CategoriesTable
 import com.example.data.model.OrderItemsTable
 import com.example.data.model.OrdersTable
@@ -36,7 +37,13 @@ object DatabaseFactory {
 
         // Esta transacción crea las tablas en la base de datos si no existen
         transaction {
-            SchemaUtils.create(CategoriesTable, ProductsTable, UsersTable, OrdersTable, OrderItemsTable)
+            SchemaUtils.create(
+                CategoriesTable,
+                ProductsTable,
+                UsersTable,
+                OrdersTable,
+                OrderItemsTable,
+                CartItemsTable)
         }
     }
 

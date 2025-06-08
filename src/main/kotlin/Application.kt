@@ -2,6 +2,7 @@ package com.example
 
 import com.example.plugins.DatabaseFactory
 import com.example.routes.authRouting
+import com.example.routes.cartRouting
 import io.ktor.server.application.*
 import io.ktor.server.routing.routing
 import routes.categoryRouting
@@ -25,6 +26,7 @@ fun Application.module() {
         productRouting()
         authRouting(tokenProvider)
         categoryRouting()
+        cartRouting()
         // Aquí podrías añadir otras rutas en el futuro
         // userRouting()
         // orderRouting()
