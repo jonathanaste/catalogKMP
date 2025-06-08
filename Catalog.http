@@ -1,0 +1,42 @@
+### 1. Iniciar sesión para obtener un token de autenticación
+# Asegúrate de que este usuario ya esté registrado en tu base de datos.
+# Si no, ejecuta primero la petición de registro.
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "email": "test-ide@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.global.set("auth_token", response.body.token);
+%}
+
+### SEPARADOR ###
+
+### 2. Crear un nuevo producto (requiere token)
+# Esta petición usará automáticamente el 'auth_token' que guardamos en el paso anterior.
+POST http://localhost:8080/admin/productos
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Sérum Facial Vitamina C",
+  "description": "Potente sérum antioxidante para una piel luminosa y uniforme. Ideal para todo tipo de piel.",
+  "price": 2500.0,
+  "mainImageUrl": "https://example.com/images/serum_vit_c.jpg",
+  "categoryId": "cat01",
+  "inStock": true
+}
+
+### 1. Crear la categoría ANTES de crear el producto
+POST http://localhost:8080/admin/categorias
+Content-Type: application/json
+# No necesitas token para esta ruta por ahora, según nuestra configuración actual
+
+{
+  "id": "cat01",
+  "name": "Cuidado Facial",
+  "imageUrl": "https://example.com/images/cuidado_facial.jpg"
+}
