@@ -17,6 +17,9 @@ fun Application.module() {
 
     // Creamos una única instancia del proveedor de tokens
     val tokenProvider = TokenProvider(environment.config)
+    configureSerialization()
+    configureSecurity()
+
     routing {
         // Llama a la función que define todas las rutas de productos
         productRouting()
@@ -26,6 +29,4 @@ fun Application.module() {
         // userRouting()
         // orderRouting()
     }
-    configureSerialization()
-    configureSecurity()
 }

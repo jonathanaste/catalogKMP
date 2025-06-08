@@ -4,8 +4,11 @@ import com.example.data.model.CategoriesTable
 import com.example.data.model.Category
 import com.example.plugins.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 
 class CategoryRepositoryImpl : CategoryRepository {
 
@@ -26,5 +29,23 @@ class CategoryRepositoryImpl : CategoryRepository {
             it[imageUrl] = category.imageUrl
         }
         resultRowToCategory(insertStatement.resultedValues!!.first())
+    }
+
+    override suspend fun getCategoryById(id: String): Category? = dbQuery {
+        CategoriesTable
+            .selectAll().where { CategoriesTable.id eq id }
+            .map(::resultRowToCategory)
+            .singleOrNull()
+    }
+
+    override suspend fun updateCategory(id: String, category: Category): Boolean = dbQuery {
+        CategoriesTable.update({ CategoriesTable.id eq id }) {
+            it[name] = category.name
+            it[imageUrl] = category.imageUrl
+        } > 0
+    }
+
+    override suspend fun deleteCategory(id: String): Boolean = dbQuery {
+        CategoriesTable.deleteWhere { CategoriesTable.id eq id } > 0
     }
 }

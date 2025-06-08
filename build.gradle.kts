@@ -39,5 +39,6 @@ dependencies {
     // La librería para gestionar el "pool" de conexiones, muy recomendada para producción
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.mindrot:jbcrypt:0.4")
-    implementation("io.ktor:ktor-server-auth-jwt:2.3.12")
+
+    implementation("io.ktor:ktor-server-auth-jwt")
 }
