@@ -8,7 +8,7 @@ import java.util.*
 
 class TokenProvider(config: ApplicationConfig) {
     private val audience = config.property("jwt.audience").getString()
-    private val secret = config.property("jwt.secret").getString()
+    private val secret = System.getenv("KTOR_JWT_SECRET") ?: config.property("jwt.secret").getString()
     private val issuer = config.property("jwt.issuer").getString()
     private val expirationDate = 36_000_00 * 24 // 24 horas en milisegundos
 

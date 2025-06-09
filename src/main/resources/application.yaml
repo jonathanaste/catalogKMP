@@ -11,7 +11,6 @@ database:
   password: "Nx.695"
   maxPoolSize: 10
 jwt:
-  secret: "un-secreto-muy-largo-y-dificil-de-adivinar-que-debes-cambiar"
   issuer: "http://0.0.0.0:8080"
   audience: "catalogo-app-users"
   realm: "Catalogo App"
