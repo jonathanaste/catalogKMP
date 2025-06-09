@@ -49,4 +49,7 @@ dependencies {
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 
     implementation("io.ktor:ktor-server-status-pages")
+
+    implementation("org.flywaydb:flyway-core:10.15.2")
+    implementation("org.flywaydb:flyway-database-postgresql:10.15.2")
 }
