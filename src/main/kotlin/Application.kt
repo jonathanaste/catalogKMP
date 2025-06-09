@@ -12,6 +12,7 @@ import org.koin.logger.slf4jLogger
 import routes.categoryRouting
 import routes.productRouting
 import security.TokenProvider
+import com.example.plugins.configureStatusPages
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -28,6 +29,7 @@ fun Application.module() {
     // Creamos una única instancia del proveedor de tokens
     val tokenProvider = TokenProvider(environment.config)
     configureSerialization()
+    configureStatusPages()
     configureSecurity()
 
     routing {

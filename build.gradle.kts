@@ -47,4 +47,6 @@ dependencies {
     implementation("io.insert-koin:koin-ktor:$koin_version")
 // Koin para logging (buena práctica)
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+
+    implementation("io.ktor:ktor-server-status-pages")
 }

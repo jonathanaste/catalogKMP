@@ -52,13 +52,12 @@ fun Route.categoryRouting() {
                     return@post call.respond(HttpStatusCode.Forbidden)
                 }
 
-                try {
-                    val categoryRequest = call.receive<Category>()
-                    val newCategory = repository.addCategory(categoryRequest)
-                    call.respond(HttpStatusCode.Created, newCategory)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, "Datos de categoría inválidos: ${e.message}")
-                }
+                // Si call.receive falla, Ktor lanzará una excepción.
+                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
+                val categoryRequest = call.receive<Category>()
+                val newCategory = repository.addCategory(categoryRequest)
+                call.respond(HttpStatusCode.Created, newCategory)
+
             }
 
             // PUT /admin/categorias/{id} - Protegido

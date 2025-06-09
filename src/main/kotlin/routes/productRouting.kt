@@ -59,27 +59,24 @@ fun Route.productRouting() {
                 }
                 // --- FIN DE LA VERIFICACIÓN DE ROL ---
 
-                try {
-                    val request = call.receive<ProductRequest>() // <-- ¡Ahora espera un ProductRequest!
+                // Si call.receive falla, Ktor lanzará una excepción.
+                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
+                val request = call.receive<ProductRequest>() // <-- ¡Ahora espera un ProductRequest!
 
-                    // 2. Creamos el objeto Product completo, generando el ID en el servidor.
-                    val productToCreate = Product(
-                        id = UUID.randomUUID().toString(),
-                        name = request.name,
-                        description = request.description,
-                        price = request.price,
-                        mainImageUrl = request.mainImageUrl,
-                        categoryId = request.categoryId,
-                        inStock = request.inStock,
-                    )
+                // 2. Creamos el objeto Product completo, generando el ID en el servidor.
+                val productToCreate = Product(
+                    id = UUID.randomUUID().toString(),
+                    name = request.name,
+                    description = request.description,
+                    price = request.price,
+                    mainImageUrl = request.mainImageUrl,
+                    categoryId = request.categoryId,
+                    inStock = request.inStock,
+                )
 
-                    // 3. Pasamos el objeto completo al repositorio para guardarlo.
-                    val newProduct = repository.addProduct(productToCreate)
-
-                    call.respond(HttpStatusCode.Created, newProduct)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, "Datos de producto inválidos: ${e.message}")
-                }
+                // 3. Pasamos el objeto completo al repositorio para guardarlo.
+                val newProduct = repository.addProduct(productToCreate)
+                call.respond(HttpStatusCode.Created, newProduct)
             }
 
             // PUT /admin/productos/{id} - Actualizar un producto existente
@@ -95,16 +92,14 @@ fun Route.productRouting() {
                     "ID de producto faltante"
                 )
 
-                try {
-                    val productRequest = call.receive<Product>()
-                    val updated = repository.updateProduct(id, productRequest)
-                    if (updated) {
-                        call.respond(HttpStatusCode.OK)
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "Producto no encontrado")
-                    }
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, "Datos de producto inválidos: ${e.message}")
+                // Si call.receive falla, Ktor lanzará una excepción.
+                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
+                val productRequest = call.receive<Product>()
+                val updated = repository.updateProduct(id, productRequest)
+                if (updated) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Producto no encontrado")
                 }
             }
 
