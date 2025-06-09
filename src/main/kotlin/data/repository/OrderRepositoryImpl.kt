@@ -1,6 +1,8 @@
 package com.example.data.repository
 
 import com.example.data.model.*
+import com.example.plugins.BadRequestException
+import com.example.plugins.ConflictException
 import com.example.plugins.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.selectAll
@@ -8,10 +10,11 @@ import java.util.*
 
 class OrderRepositoryImpl : OrderRepository {
 
-    override suspend fun createOrder(userId: String, cartItems: List<ItemCarrito>): Pedido? {
+    override suspend fun createOrder(userId: String, cartItems: List<ItemCarrito>): Pedido {
         // dbQuery nos asegura que toda esta lógica se ejecute en una única transacción
         return dbQuery {
-            if (cartItems.isEmpty()) return@dbQuery null
+            if (cartItems.isEmpty()) throw BadRequestException("No se puede crear un pedido de un carrito vacío.")
+
 
             // 1. Obtenemos los IDs de los productos del carrito
             val productIds = cartItems.map { it.productId }
@@ -22,7 +25,7 @@ class OrderRepositoryImpl : OrderRepository {
 
             // Verificamos que todos los productos del carrito sigan existiendo
             if (productIds.size != productsFromDb.size) {
-                return@dbQuery null // Un producto fue eliminado mientras estaba en el carrito
+                throw ConflictException("Uno o más productos en el carrito ya no están disponibles o son inválidos.")
             }
 
             var total = 0.0

@@ -3,11 +3,14 @@ package routes
 import com.example.data.model.ProductRequest
 import com.example.data.model.Product
 import com.example.data.repository.ProductRepository
+import com.example.plugins.ForbiddenException
 import io.ktor.http.*
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -19,28 +22,19 @@ fun Route.productRouting() {
     val repository: ProductRepository by inject()
 
     route("/productos") {
-        // GET /productos - Obtener todos los productos 
+        // GET /productos - Obtener todos los productos
         get {
             val products = repository.getAllProducts()
             call.respond(products)
         }
 
-        // GET /productos/{id} - Obtener un producto por su ID 
+        // GET /productos/{id} - Obtener un producto por su ID
         get("{id}") {
-            val id = call.parameters["id"] ?: return@get call.respondText(
-                "ID de producto no encontrado",
-                status = HttpStatusCode.BadRequest
-            )
+            val id = call.parameters["id"] ?: throw BadRequestException("ID de producto no encontrado")
 
-            val product = repository.getProductById(id)
-            if (product != null) {
-                call.respond(product)
-            } else {
-                call.respondText(
-                    "No se encontró producto con id $id",
-                    status = HttpStatusCode.NotFound
-                )
-            }
+            val product = repository.getProductById(id) ?: throw NotFoundException("No se encontró producto con id $id")
+
+            call.respond(product)
         }
     }
 
@@ -51,11 +45,8 @@ fun Route.productRouting() {
             post {
                 // --- INICIO DE LA VERIFICACIÓN DE ROL ---
                 val principal = call.principal<JWTPrincipal>()
-                val userRole = principal?.getClaim("role", String::class)
-
-                if (userRole != "ADMIN") {
-                    call.respond(HttpStatusCode.Forbidden, "Acceso denegado. Se requiere rol de Administrador.")
-                    return@post
+                if (principal?.getClaim("role", String::class) != "ADMIN") {
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
                 // --- FIN DE LA VERIFICACIÓN DE ROL ---
 
@@ -84,7 +75,7 @@ fun Route.productRouting() {
                 val principal = call.principal<JWTPrincipal>()
                 val userRole = principal?.getClaim("role", String::class)
                 if (userRole != "ADMIN") {
-                    return@put call.respond(HttpStatusCode.Forbidden, "Acceso denegado.")
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
 
                 val id = call.parameters["id"] ?: return@put call.respond(
@@ -99,7 +90,7 @@ fun Route.productRouting() {
                 if (updated) {
                     call.respond(HttpStatusCode.OK)
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Producto no encontrado")
+                    throw com.example.plugins.NotFoundException("Se requiere rol de Administrador.")
                 }
             }
 
@@ -108,19 +99,20 @@ fun Route.productRouting() {
                 val principal = call.principal<JWTPrincipal>()
                 val userRole = principal?.getClaim("role", String::class)
                 if (userRole != "ADMIN") {
-                    return@delete call.respond(HttpStatusCode.Forbidden, "Acceso denegado.")
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
-                val id = call.parameters["id"] ?: return@delete call.respond(
-                    HttpStatusCode.BadRequest,
-                    "ID de producto faltante"
-                )
+                val id = requireNotNull(call.parameters["id"]) {
+                    "El ID del producto no puede ser nulo."
+                }
 
                 val deleted = repository.deleteProduct(id)
-                if (deleted) {
-                    call.respond(HttpStatusCode.NoContent)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "Producto no encontrado")
+
+                if (!deleted) {
+                    throw NotFoundException("Producto con id $id no encontrado.")
                 }
+
+                call.respond(HttpStatusCode.NoContent)
+
             }
         }
     }

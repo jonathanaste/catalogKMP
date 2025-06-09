@@ -2,6 +2,9 @@ package routes
 
 import com.example.data.model.Category
 import com.example.data.repository.CategoryRepository
+import com.example.plugins.BadRequestException
+import com.example.plugins.ForbiddenException
+import com.example.plugins.NotFoundException
 import io.ktor.http.*
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -25,20 +28,11 @@ fun Route.categoryRouting() {
 
         // GET /categorias/{id} - Público
         get("{id}") {
-            val id = call.parameters["id"] ?: return@get call.respondText(
-                "ID de categoría no encontrado",
-                status = HttpStatusCode.BadRequest
-            )
+            val id = call.parameters["id"] ?: throw BadRequestException("ID de categoría no encontrado")
 
-            val category = repository.getCategoryById(id)
-            if (category != null) {
-                call.respond(category)
-            } else {
-                call.respondText(
-                    "No se encontró categoría con id $id",
-                    status = HttpStatusCode.NotFound
-                )
-            }
+            val category =
+                repository.getCategoryById(id) ?: throw NotFoundException("No se encontró categoría con id $id")
+            call.respond(category)
         }
     }
 
@@ -49,7 +43,7 @@ fun Route.categoryRouting() {
             post {
                 val principal = call.principal<JWTPrincipal>()
                 if (principal?.getClaim("role", String::class) != "ADMIN") {
-                    return@post call.respond(HttpStatusCode.Forbidden)
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
 
                 // Si call.receive falla, Ktor lanzará una excepción.
@@ -57,24 +51,23 @@ fun Route.categoryRouting() {
                 val categoryRequest = call.receive<Category>()
                 val newCategory = repository.addCategory(categoryRequest)
                 call.respond(HttpStatusCode.Created, newCategory)
-
             }
 
             // PUT /admin/categorias/{id} - Protegido
             put("{id}") {
                 val principal = call.principal<JWTPrincipal>()
                 if (principal?.getClaim("role", String::class) != "ADMIN") {
-                    return@put call.respond(HttpStatusCode.Forbidden)
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
 
-                val id = call.parameters["id"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+                val id = call.parameters["id"] ?: throw BadRequestException("ID de categoría no encontrado")
                 val categoryRequest = call.receive<Category>()
 
                 val updated = repository.updateCategory(id, categoryRequest)
                 if (updated) {
                     call.respond(HttpStatusCode.OK)
                 } else {
-                    call.respond(HttpStatusCode.NotFound)
+                    throw NotFoundException("No se encontró categoría con id $id")
                 }
             }
 
@@ -82,16 +75,16 @@ fun Route.categoryRouting() {
             delete("{id}") {
                 val principal = call.principal<JWTPrincipal>()
                 if (principal?.getClaim("role", String::class) != "ADMIN") {
-                    return@delete call.respond(HttpStatusCode.Forbidden)
+                    throw ForbiddenException("Se requiere rol de Administrador.")
                 }
 
-                val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                val id = call.parameters["id"] ?: throw BadRequestException("ID de categoría no encontrado")
 
                 val deleted = repository.deleteCategory(id)
                 if (deleted) {
                     call.respond(HttpStatusCode.NoContent)
                 } else {
-                    call.respond(HttpStatusCode.NotFound)
+                    throw NotFoundException("No se encontró categoría con id $id")
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.example.routes
 
 import com.example.data.repository.CartRepository
 import com.example.data.repository.OrderRepository
+import com.example.plugins.BadRequestException
 import io.ktor.http.*
 import io.ktor.server.application.call
 import io.ktor.server.auth.*
@@ -24,17 +25,13 @@ fun Route.orderRouting() {
 
                 val cart = cartRepository.getCart(userId)
                 if (cart.items.isEmpty()) {
-                    return@post call.respond(HttpStatusCode.BadRequest, "El carrito está vacío.")
+                    throw BadRequestException("El carrito está vacío.")
                 }
 
                 val newOrder = orderRepository.createOrder(userId, cart.items)
 
-                if (newOrder != null) {
-                    cartRepository.clearCart(userId) // Vaciamos el carrito solo si el pedido fue exitoso
-                    call.respond(HttpStatusCode.Created, newOrder)
-                } else {
-                    call.respond(HttpStatusCode.InternalServerError, "Error al crear el pedido.")
-                }
+                cartRepository.clearCart(userId) // Vaciamos el carrito solo si el pedido fue exitoso
+                call.respond(HttpStatusCode.Created, newOrder)
             }
 
             // GET /pedidos
