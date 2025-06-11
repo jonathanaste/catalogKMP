@@ -10,7 +10,9 @@ data class Product(
     val mainImageUrl: String,
     val categoryId: String,
     val stockQuantity: Int,
-    val supplierId: String?
+    val supplierId: String?,
+    val costPrice: Double,
+    val isConsigned: Boolean,
 )
 
 @Serializable
@@ -21,5 +23,7 @@ data class ProductRequest(
     val mainImageUrl: String,
     val categoryId: String,
     val stockQuantity: Int,
-    val supplierId: String?
+    val supplierId: String?,
+    val costPrice: Double,
+    val isConsigned: Boolean,
 )

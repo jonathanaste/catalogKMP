@@ -6,7 +6,8 @@ import com.example.routes.authRouting
 import com.example.routes.cartRouting
 import com.example.routes.orderRouting
 import io.ktor.server.application.*
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
+import io.ktor.server.plugins.swagger.*
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import routes.categoryRouting
@@ -80,6 +81,8 @@ fun Application.module() {
     configureSecurity()
 
     routing {
+        swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
+
         productRouting()
         authRouting(tokenProvider)
         categoryRouting()

@@ -12,5 +12,7 @@ data class ProductResponse(
     val mainImageUrl: String,
     val stockQuantity: Int,
     val supplierId: String?,
+    val costPrice: Double,
+    val isConsigned: Boolean,
     val category: Category // <-- Aquí está la magia: un objeto Category completo
 )

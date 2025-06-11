@@ -54,4 +54,6 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql:10.15.2")
 
     implementation("io.ktor:ktor-server-cors:2.3.12")
+
+    implementation("io.ktor:ktor-server-swagger:2.3.12")
 }

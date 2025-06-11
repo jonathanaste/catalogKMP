@@ -14,7 +14,6 @@ class UserRepositoryImpl : UserRepository {
         email = row[UsersTable.email],
         name = row[UsersTable.name],
         role = row[UsersTable.role]
-        // ¡NUNCA devolvemos el hash de la contraseña!
     )
 
     override suspend fun registerUser(request: RegisterRequest): User? {

@@ -33,7 +33,8 @@ object ProductsTable : Table("products") {
     val categoryId = varchar("category_id", 128).references(CategoriesTable.id)
     val stockQuantity = integer("stock_quantity")
     val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable() // <-- AÑADE ESTA LÍNEA
-
+    val costPrice = double("cost_price")
+    val isConsigned = bool("is_consigned")
     override val primaryKey = PrimaryKey(id)
 }
 

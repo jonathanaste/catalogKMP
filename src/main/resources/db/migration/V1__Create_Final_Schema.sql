@@ -1,5 +1,5 @@
 -- V1__Create_Final_Schema.sql
--- Este script crea todas las tablas en su estado final para el MVP.
+-- Versión final y consolidada del esquema para el MVP.
 
 CREATE TABLE suppliers (
                            id VARCHAR(128) PRIMARY KEY,
@@ -33,11 +33,10 @@ CREATE TABLE products (
                           price DOUBLE PRECISION NOT NULL,
                           main_image_url VARCHAR(1024) NOT NULL,
                           stock_quantity INTEGER NOT NULL DEFAULT 0,
+                          cost_price DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+                          is_consigned BOOLEAN NOT NULL DEFAULT FALSE,
                           category_id VARCHAR(128) NOT NULL REFERENCES categories(id),
-                          supplier_id VARCHAR(128) REFERENCES suppliers(id),
-                          pricing_type VARCHAR(50),
-                          cost_price DOUBLE PRECISION,
-                          profit_percentage DOUBLE PRECISION
+                          supplier_id VARCHAR(128) REFERENCES suppliers(id)
 );
 
 CREATE TABLE cart_items (

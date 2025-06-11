@@ -64,6 +64,8 @@ fun Route.productRouting() {
                     categoryId = request.categoryId,
                     stockQuantity = request.stockQuantity,
                     supplierId = request.supplierId,
+                    costPrice = request.costPrice,
+                    isConsigned = request.isConsigned,
                 )
 
                 // 3. Pasamos el objeto completo al repositorio para guardarlo.

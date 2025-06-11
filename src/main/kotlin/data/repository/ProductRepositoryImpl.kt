@@ -22,7 +22,9 @@ class ProductRepositoryImpl : ProductRepository {
         mainImageUrl = row[ProductsTable.mainImageUrl],
         categoryId = row[ProductsTable.categoryId],
         stockQuantity = row[ProductsTable.stockQuantity],
-        supplierId = row[ProductsTable.supplierId]
+        supplierId = row[ProductsTable.supplierId],
+        costPrice = row[ProductsTable.costPrice],
+        isConsigned = row[ProductsTable.isConsigned],
     )
 
     // Función auxiliar para convertir una fila de la DB a nuestro objeto ProductResponse
@@ -34,6 +36,8 @@ class ProductRepositoryImpl : ProductRepository {
         mainImageUrl = row[ProductsTable.mainImageUrl],
         stockQuantity = row[ProductsTable.stockQuantity],
         supplierId = row[ProductsTable.supplierId],
+        costPrice = row[ProductsTable.costPrice],
+        isConsigned = row[ProductsTable.isConsigned],
         category = Category( // Creamos el objeto Category desde la misma fila
             id = row[CategoriesTable.id],
             name = row[CategoriesTable.name],
@@ -65,6 +69,9 @@ class ProductRepositoryImpl : ProductRepository {
             it[mainImageUrl] = product.mainImageUrl
             it[categoryId] = product.categoryId
             it[stockQuantity] = product.stockQuantity
+            it[supplierId] = product.supplierId
+            it[costPrice] = product.costPrice
+            it[isConsigned] = product.isConsigned
         }
         resultRowToProduct(insertStatement.resultedValues!!.first())
     }
@@ -77,6 +84,9 @@ class ProductRepositoryImpl : ProductRepository {
             it[mainImageUrl] = product.mainImageUrl
             it[categoryId] = product.categoryId
             it[stockQuantity] = product.stockQuantity
+            it[supplierId] = product.supplierId
+            it[costPrice] = product.costPrice
+            it[isConsigned] = product.isConsigned
         } > 0
     }
 

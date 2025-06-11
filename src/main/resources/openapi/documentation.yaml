@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: API del Catálogo de Cosmética
+  description: API RESTful para gestionar el catálogo, proveedores, usuarios y flujo de compras de una aplicación de e-commerce a gran escala.
+  version: 1.2.0
+servers:
+  - url: http://localhost:8080
+    description: Servidor de Desarrollo Local
+
+tags:
+  - name: Authentication
+    description: Endpoints para registro y login de usuarios.
+  - name: Catalog
+    description: Endpoints públicos para la consulta de productos y categorías.
+  - name: Admin - Suppliers
+    description: (Admin) CRUD completo para la gestión de proveedores.
+  - name: Admin - Categories
+    description: (Admin) CRUD completo para la gestión de categorías.
+  - name: Admin - Products
+    description: (Admin) CRUD completo para la gestión de productos.
+  - name: Shopping Cart
+    description: (Usuario Autenticado) Endpoints para la gestión del carrito de compras.
+  - name: Orders
+    description: (Usuario Autenticado) Endpoints para el checkout y la consulta de pedidos.
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Registrar un nuevo usuario con rol "CLIENTE".
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } }
+      responses:
+        '201':
+          description: Usuario creado exitosamente.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/User' } }
+        '409':
+          description: El email ya está en uso.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Iniciar sesión para obtener un token JWT.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } }
+      responses:
+        '200':
+          description: Login exitoso.
+          content:
+            application/json:
+              schema: { type: object, properties: { token: { type: string, description: "Token JWT para autenticación." } } }
+        '401':
+          description: Email o contraseña incorrectos.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+
+  /categorias:
+    get:
+      tags: [Catalog]
+      summary: Obtener la lista de todas las categorías de productos.
+      responses:
+        '200':
+          description: Lista de categorías.
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } }
+
+  /productos:
+    get:
+      tags: [Catalog]
+      summary: Obtener la lista de todos los productos.
+      responses:
+        '200':
+          description: Lista de productos con su categoría anidada.
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ProductResponse' } } }
+
+  /admin/suppliers:
+    get:
+      tags: [Admin - Suppliers]
+      summary: Obtener la lista de todos los proveedores.
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: Lista de proveedores.
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Supplier' } } }
+        '401': { description: "Token no provisto o inválido." }
+    post:
+      tags: [Admin - Suppliers]
+      summary: Crear un nuevo proveedor.
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/CreateSupplierRequest' } }
+      responses:
+        '201':
+          description: Proveedor creado.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/Supplier' } }
+        '403': { description: "Acceso denegado (no es admin)." }
+
+  /admin/suppliers/{id}:
+    put:
+      tags: [Admin - Suppliers]
+      summary: Actualizar un proveedor existente.
+      security: [ { "BearerAuth": [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/Supplier' } }
+      responses:
+        '204': { description: "Proveedor actualizado con éxito." }
+        '404': { description: "Proveedor no encontrado." }
+    delete:
+      tags: [Admin - Suppliers]
+      summary: Eliminar un proveedor.
+      security: [ { "BearerAuth": [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: "Proveedor eliminado con éxito." }
+        '404': { description: "Proveedor no encontrado." }
+
+  # Aquí irían las otras rutas de admin para Categories y Products, siguiendo el mismo patrón...
+
+  /carrito:
+    get:
+      tags: [Shopping Cart]
+      summary: Obtener el contenido del carrito del usuario autenticado.
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: Contenido del carrito.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ShoppingCart' } }
+    delete:
+      tags: [Shopping Cart]
+      summary: Vaciar el carrito del usuario autenticado.
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '204': { description: "Carrito vaciado con éxito." }
+
+  /carrito/agregar:
+    post:
+      tags: [Shopping Cart]
+      summary: Añadir un ítem al carrito o incrementar su cantidad.
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ItemCarrito' } }
+      responses:
+        '200':
+          description: Carrito actualizado.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ShoppingCart' } }
+
+  /pedidos/checkout:
+    post:
+      tags: [Orders]
+      summary: Crea un nuevo pedido a partir del carrito del usuario y lo vacía.
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '201':
+          description: Pedido creado exitosamente.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/Pedido' } }
+        '400': { description: "El carrito está vacío." }
+        '409': { description: "Conflicto, ej. stock insuficiente." }
+
+  /pedidos:
+    get:
+      tags: [Orders]
+      summary: Obtener el historial de pedidos del usuario autenticado.
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: Lista de pedidos.
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Pedido' } } }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Introduce el token JWT con el prefijo 'Bearer '. Ejemplo: 'Bearer ey...'"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        role: { type: string, enum: [CLIENTE, ADMIN] }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        name: { type: string }
+    Category:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        imageUrl: { type: string, format: url, nullable: true }
+    Supplier:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        contactPerson: { type: string, nullable: true }
+        phone: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+        cbu: { type: string, nullable: true }
+        aliasCbu: { type: string, nullable: true }
+        notes: { type: string, nullable: true }
+    CreateSupplierRequest:
+      type: object
+      properties: # Similar a Supplier pero sin el ID
+        name: { type: string }
+        contactPerson: { type: string, nullable: true }
+        # ...etc
+    ProductRequest:
+      type: object
+      properties: # Similar a Product pero sin el ID
+        name: { type: string }
+        # ...etc
+    ProductResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        price: { type: number, format: double }
+        mainImageUrl: { type: string, format: url }
+        stockQuantity: { type: integer }
+        category: { $ref: '#/components/schemas/Category' }
+        supplierId: { type: string, nullable: true }
+        pricingType: { type: string, enum: [FIXED_COST, CONSIGNMENT] }
+        costPrice: { type: number, format: double, nullable: true }
+        profitPercentage: { type: number, format: double, nullable: true }
+    ItemCarrito:
+      type: object
+      required: [productId, cantidad]
+      properties:
+        productId: { type: string }
+        cantidad: { type: integer, minimum: 1 }
+    ShoppingCart:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/ItemCarrito' } }
+    ItemPedido:
+      type: object
+      properties:
+        productId: { type: string }
+        nombreProducto: { type: string }
+        cantidad: { type: integer }
+        precioUnitario: { type: number, format: double }
+    Pedido:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        usuarioId: { type: string, format: uuid }
+        fechaPedido: { type: integer, format: int64, description: "Timestamp UNIX" }
+        estado: { type: string }
+        total: { type: number, format: double }
+        items: { type: array, items: { $ref: '#/components/schemas/ItemPedido' } }

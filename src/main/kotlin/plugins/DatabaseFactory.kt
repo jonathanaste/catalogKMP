@@ -34,7 +34,6 @@ object DatabaseFactory {
             .load()
 
         // 2. Ejecuta las migraciones. Flyway sabrá cuáles aplicar.
-        flyway.baseline()
         flyway.migrate()
         // --- FIN DE LA LÓGICA DE FLYWAY ---
 
