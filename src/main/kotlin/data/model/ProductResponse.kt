@@ -11,5 +11,6 @@ data class ProductResponse(
     val price: Double,
     val mainImageUrl: String,
     val stockQuantity: Int,
+    val supplierId: String?,
     val category: Category // <-- Aquí está la magia: un objeto Category completo
 )

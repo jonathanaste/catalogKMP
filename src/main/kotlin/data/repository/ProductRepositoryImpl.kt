@@ -21,7 +21,8 @@ class ProductRepositoryImpl : ProductRepository {
         price = row[ProductsTable.price],
         mainImageUrl = row[ProductsTable.mainImageUrl],
         categoryId = row[ProductsTable.categoryId],
-        stockQuantity = row[ProductsTable.stockQuantity]
+        stockQuantity = row[ProductsTable.stockQuantity],
+        supplierId = row[ProductsTable.supplierId]
     )
 
     // Función auxiliar para convertir una fila de la DB a nuestro objeto ProductResponse
@@ -32,6 +33,7 @@ class ProductRepositoryImpl : ProductRepository {
         price = row[ProductsTable.price],
         mainImageUrl = row[ProductsTable.mainImageUrl],
         stockQuantity = row[ProductsTable.stockQuantity],
+        supplierId = row[ProductsTable.supplierId],
         category = Category( // Creamos el objeto Category desde la misma fila
             id = row[CategoriesTable.id],
             name = row[CategoriesTable.name],

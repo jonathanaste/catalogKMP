@@ -16,4 +16,6 @@ val appModule = module {
     // Asumiendo que ya tienes las implementaciones del carrito y pedidos
     single<CartRepository> { CartRepositoryImpl() }
     single<OrderRepository> { OrderRepositoryImpl() }
+
+    single<SupplierRepository> { SupplierRepositoryImpl() }
 }

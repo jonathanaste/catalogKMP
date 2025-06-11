@@ -2,7 +2,20 @@ package com.example.data.model
 
 import org.jetbrains.exposed.sql.Table
 
-// Tabla para Categorías, basada en tu data class Categoria
+
+object SuppliersTable : Table("suppliers") {
+    val id = varchar("id", 128)
+    val name = varchar("name", 255)
+    val contactPerson = varchar("contact_person", 255).nullable()
+    val phone = varchar("phone", 50).nullable()
+    val email = varchar("email", 255).uniqueIndex().nullable()
+    val cbu = varchar("cbu", 22).nullable()
+    val aliasCbu = varchar("alias_cbu", 100).nullable()
+    val notes = text("notes").nullable()
+
+    override val primaryKey = PrimaryKey(id)
+}
+
 object CategoriesTable : Table("categories") {
     val id = varchar("id", 128)
     val name = varchar("name", 255)
@@ -11,7 +24,6 @@ object CategoriesTable : Table("categories") {
     override val primaryKey = PrimaryKey(id)
 }
 
-// Tabla para Productos, basada en tu data class Producto
 object ProductsTable : Table("products") {
     val id = varchar("id", 128)
     val name = varchar("name", 255)
@@ -19,12 +31,12 @@ object ProductsTable : Table("products") {
     val price = double("price")
     val mainImageUrl = varchar("main_image_url", 1024)
     val categoryId = varchar("category_id", 128).references(CategoriesTable.id)
-    val stockQuantity = integer("stock_quantity") // <-- LÍNEA NUEVA
+    val stockQuantity = integer("stock_quantity")
+    val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable() // <-- AÑADE ESTA LÍNEA
 
     override val primaryKey = PrimaryKey(id)
 }
 
-// Tabla para Usuarios, basada en tu data class Usuario
 object UsersTable : Table("users") {
     val id = varchar("id", 128)
     val email = varchar("email", 255).uniqueIndex()
@@ -35,7 +47,7 @@ object UsersTable : Table("users") {
     override val primaryKey = PrimaryKey(id)
 }
 
-// Tabla para Pedidos, basada en tu data class Pedido
+// Tabla para Pedidos, basada en data class Pedido
 object OrdersTable : Table("orders") {
     val id = varchar("id", 128)
     val userId = varchar("user_id", 128).references(UsersTable.id)
