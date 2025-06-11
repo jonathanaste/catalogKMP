@@ -8,3 +8,9 @@ data class Category(
     val name: String,
     val imageUrl: String?
 )
+
+@Serializable
+data class CategoryRequest(
+    val name: String,
+    val imageUrl: String?
+)

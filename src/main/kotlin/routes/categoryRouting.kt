@@ -1,6 +1,7 @@
 package routes
 
 import com.example.data.model.Category
+import com.example.data.model.CategoryRequest
 import com.example.data.repository.CategoryRepository
 import com.example.plugins.BadRequestException
 import com.example.plugins.ForbiddenException
@@ -39,6 +40,22 @@ fun Route.categoryRouting() {
     // Rutas de Administración para Categorías
     authenticate("auth-jwt") {
         route("/admin/categorias") {
+
+            // GET /categorias - Público
+            get {
+                val categories = repository.getAllCategories()
+                call.respond(categories)
+            }
+
+            // GET /categorias/{id} - Público
+            get("{id}") {
+                val id = call.parameters["id"] ?: throw BadRequestException("ID de categoría no encontrado")
+
+                val category =
+                    repository.getCategoryById(id) ?: throw NotFoundException("No se encontró categoría con id $id")
+                call.respond(category)
+            }
+
             // POST /admin/categorias - Protegido
             post {
                 val principal = call.principal<JWTPrincipal>()
@@ -48,8 +65,8 @@ fun Route.categoryRouting() {
 
                 // Si call.receive falla, Ktor lanzará una excepción.
                 // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
-                val categoryRequest = call.receive<Category>()
-                val newCategory = repository.addCategory(categoryRequest)
+                val request = call.receive<CategoryRequest>()
+                val newCategory = repository.addCategory(request)
                 call.respond(HttpStatusCode.Created, newCategory)
             }
 

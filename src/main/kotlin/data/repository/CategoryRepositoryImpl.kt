@@ -2,6 +2,7 @@ package com.example.data.repository
 
 import com.example.data.model.CategoriesTable
 import com.example.data.model.Category
+import com.example.data.model.CategoryRequest
 import com.example.plugins.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -9,6 +10,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import java.util.UUID
 
 class CategoryRepositoryImpl : CategoryRepository {
 
@@ -22,9 +24,9 @@ class CategoryRepositoryImpl : CategoryRepository {
         CategoriesTable.selectAll().map(::resultRowToCategory)
     }
 
-    override suspend fun addCategory(category: Category): Category = dbQuery {
+    override suspend fun addCategory(category: CategoryRequest): Category = dbQuery {
         val insertStatement = CategoriesTable.insert {
-            it[id] = category.id
+            it[id] = UUID.randomUUID().toString()
             it[name] = category.name
             it[imageUrl] = category.imageUrl
         }

@@ -41,6 +41,20 @@ fun Route.productRouting() {
     // Rutas de Administración - Protegidas en el futuro
     authenticate("auth-jwt") {
         route("/admin/productos") {
+            get {
+                val products = repository.getAllProducts()
+                call.respond(products)
+            }
+
+            // GET /productos/{id} - Obtener un producto por su ID
+            get("{id}") {
+                val id = call.parameters["id"] ?: throw BadRequestException("ID de producto no encontrado")
+
+                val product =
+                    repository.getProductById(id) ?: throw NotFoundException("No se encontró producto con id $id")
+
+                call.respond(product)
+            }
             // POST /admin/productos - Crear un nuevo producto
             post {
                 // --- INICIO DE LA VERIFICACIÓN DE ROL ---
