@@ -9,7 +9,7 @@ data class Product(
     val price: Double,
     val mainImageUrl: String,
     val categoryId: String,
-    val inStock: Boolean
+    val stockQuantity: Int
 )
 
 @Serializable
@@ -19,5 +19,5 @@ data class ProductRequest(
     val price: Double,
     val mainImageUrl: String,
     val categoryId: String,
-    val inStock: Boolean
+    val stockQuantity: Int
 )

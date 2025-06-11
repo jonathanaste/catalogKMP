@@ -62,7 +62,7 @@ fun Route.productRouting() {
                     price = request.price,
                     mainImageUrl = request.mainImageUrl,
                     categoryId = request.categoryId,
-                    inStock = request.inStock,
+                    stockQuantity = request.stockQuantity,
                 )
 
                 // 3. Pasamos el objeto completo al repositorio para guardarlo.

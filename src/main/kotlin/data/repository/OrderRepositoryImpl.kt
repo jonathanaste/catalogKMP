@@ -16,9 +16,9 @@ class OrderRepositoryImpl : OrderRepository {
             if (cartItems.isEmpty()) throw BadRequestException("No se puede crear un pedido de un carrito vacío.")
 
 
-            // 1. Obtenemos los IDs de los productos del carrito
+            // Obtenemos los IDs de los productos del carrito
             val productIds = cartItems.map { it.productId }
-            // 2. Buscamos esos productos en la DB para obtener sus precios y nombres ACTUALES
+            // Buscamos esos productos en la DB para obtener sus precios y nombres ACTUALES
             val productsFromDb = ProductsTable
                 .selectAll().where { ProductsTable.id inList productIds }
                 .associateBy { it[ProductsTable.id] }
@@ -28,8 +28,18 @@ class OrderRepositoryImpl : OrderRepository {
                 throw ConflictException("Uno o más productos en el carrito ya no están disponibles o son inválidos.")
             }
 
+            // ANTES de procesar el pedido, verificamos el stock
+            for (cartItem in cartItems) {
+                val productData = productsFromDb[cartItem.productId]
+                if (productData == null || productData[ProductsTable.stockQuantity] < cartItem.cantidad) {
+                    // Si el producto no existe o no hay stock suficiente, lanzamos un error.
+                    // StatusPages lo convertirá en un 409 Conflict para el cliente.
+                    throw ConflictException("Stock insuficiente para el producto con ID ${cartItem.productId}")
+                }
+            }
+
             var total = 0.0
-            // 3. Creamos la lista de Items del Pedido, usando los datos frescos de la DB
+            // Creamos la lista de Items del Pedido, usando los datos frescos de la DB
             val orderItems = cartItems.map { cartItem ->
                 val productData = productsFromDb[cartItem.productId]!!
                 val currentPrice = productData[ProductsTable.price]
@@ -42,7 +52,7 @@ class OrderRepositoryImpl : OrderRepository {
                 )
             }
 
-            // 4. Creamos la entrada principal del pedido en OrdersTable
+            // Creamos la entrada principal del pedido en OrdersTable
             val newOrderId = UUID.randomUUID().toString()
             OrdersTable.insert {
                 it[id] = newOrderId
@@ -54,7 +64,7 @@ class OrderRepositoryImpl : OrderRepository {
                 it[shippingMethod] = "CORREO_ARGENTINO" // Valor por defecto para el MVP
             }
 
-            // 5. Insertamos todos los ítems del pedido en OrderItemsTable
+            // Insertamos todos los ítems del pedido en OrderItemsTable
             OrderItemsTable.batchInsert(orderItems) { item ->
                 this[OrderItemsTable.orderId] = newOrderId
                 this[OrderItemsTable.productId] = item.productId
@@ -63,7 +73,17 @@ class OrderRepositoryImpl : OrderRepository {
                 this[OrderItemsTable.unitPrice] = item.precioUnitario
             }
 
-            // 6. Construimos y devolvemos el objeto Pedido completo para la respuesta de la API
+            // NUEVO: Descontar el stock de la tabla de productos
+            for (item in orderItems) {
+                ProductsTable.update({ ProductsTable.id eq item.productId }) {
+                    with(SqlExpressionBuilder) {
+                        // it.update(columna, valor_actual - valor_a_restar)
+                        it.update(stockQuantity, stockQuantity - item.cantidad)
+                    }
+                }
+            }
+
+            // Construimos y devolvemos el objeto Pedido completo para la respuesta de la API
             Pedido(
                 id = newOrderId,
                 usuarioId = userId,

@@ -19,7 +19,7 @@ object ProductsTable : Table("products") {
     val price = double("price")
     val mainImageUrl = varchar("main_image_url", 1024)
     val categoryId = varchar("category_id", 128).references(CategoriesTable.id)
-    val inStock = bool("in_stock").default(true)
+    val stockQuantity = integer("stock_quantity") // <-- LÍNEA NUEVA
 
     override val primaryKey = PrimaryKey(id)
 }

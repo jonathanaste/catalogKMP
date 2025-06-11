@@ -45,7 +45,7 @@ fun Route.authRouting(tokenProvider: TokenProvider) {
             call.respond(
                 HttpStatusCode.OK, mapOf(
                     "token" to token,
-                    "rol" to user.role // Asegúrate de que tu clase User tiene la propiedad 'role'
+                    "role" to user.role // Asegúrate de que tu clase User tiene la propiedad 'role'
                 )
             )
         }

@@ -10,6 +10,6 @@ data class ProductResponse(
     val description: String,
     val price: Double,
     val mainImageUrl: String,
-    val inStock: Boolean,
+    val stockQuantity: Int,
     val category: Category // <-- Aquí está la magia: un objeto Category completo
 )

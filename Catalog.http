@@ -4,9 +4,9 @@ POST http://localhost:8080/auth/register
 Content-Type: application/json
 
 {
-  "email": "test.koin@example.com",
-  "password": "password123",
-  "name": "Usuario Koin"
+  "email": "admin@labotica.com",
+  "password": "admin",
+  "name": "admin"
 }
 
 ### SEPARADOR ###
@@ -17,8 +17,8 @@ POST http://localhost:8080/auth/login
 Content-Type: application/json
 
 {
-  "email": "test.koin@example.com",
-  "password": "password123"
+  "email": "admin@labotica.com",
+  "password": "admin"
 }
 
 > {%

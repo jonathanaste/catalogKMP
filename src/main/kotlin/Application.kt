@@ -13,6 +13,7 @@ import routes.categoryRouting
 import routes.productRouting
 import security.TokenProvider
 import com.example.plugins.configureStatusPages
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
 
@@ -53,8 +54,8 @@ fun Application.module() {
         // deben estar aquí. `Content-Type` y `Accept` son comunes.
         allowHeaders { true } // Permite todos los headers (conveniente para desarrollo)
         // O sé más específico (mejor para producción):
-        // allowHeader(HttpHeaders.ContentType)
-        // allowHeader(HttpHeaders.Authorization) // Necesario para tu token JWT
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization) // Necesario para tu token JWT
         // allowHeader(HttpHeaders.Accept)
         // allowHeader("X-Custom-Header") // Si usas algún header personalizado
 
