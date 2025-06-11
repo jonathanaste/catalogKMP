@@ -52,4 +52,6 @@ dependencies {
 
     implementation("org.flywaydb:flyway-core:10.15.2")
     implementation("org.flywaydb:flyway-database-postgresql:10.15.2")
+
+    implementation("io.ktor:ktor-server-cors:2.3.12")
 }

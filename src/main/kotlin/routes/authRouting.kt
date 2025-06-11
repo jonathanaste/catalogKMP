@@ -36,11 +36,18 @@ fun Route.authRouting(tokenProvider: TokenProvider) {
             }
 
             // 2. Si son correctos, encontrar los datos del usuario para generar el token
-            val user = repository.findUserByEmail(request.email)!! //dado que la contraseña es correcta podemos forzar con !!
+            val user =
+                repository.findUserByEmail(request.email)!! //dado que la contraseña es correcta podemos forzar con !!
 
             // 3. Generar y devolver el token
             val token = tokenProvider.generateToken(user)
-            call.respond(HttpStatusCode.OK, mapOf("token" to token))
+            // Ahora enviamos el token Y el rol del usuario.
+            call.respond(
+                HttpStatusCode.OK, mapOf(
+                    "token" to token,
+                    "rol" to user.role // Asegúrate de que tu clase User tiene la propiedad 'role'
+                )
+            )
         }
     }
 }
