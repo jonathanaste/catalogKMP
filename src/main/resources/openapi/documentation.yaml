@@ -1,201 +1,254 @@
 openapi: 3.0.3
 info:
-  title: API del Catálogo de Cosmética
-  description: API RESTful para gestionar el catálogo, proveedores, usuarios y flujo de compras de una aplicación de e-commerce a gran escala.
-  version: 1.2.0
+  title: "La Botica - Catalog API"
+  description: "RESTful API to manage the catalog, suppliers, users, and shopping flow for a large-scale e-commerce application."
+  version: "1.3.0"
 servers:
   - url: http://localhost:8080
-    description: Servidor de Desarrollo Local
+    description: Local Development Server
 
 tags:
   - name: Authentication
-    description: Endpoints para registro y login de usuarios.
-  - name: Catalog
-    description: Endpoints públicos para la consulta de productos y categorías.
-  - name: Admin - Suppliers
-    description: (Admin) CRUD completo para la gestión de proveedores.
-  - name: Admin - Categories
-    description: (Admin) CRUD completo para la gestión de categorías.
+    description: Endpoints for user registration and login.
+  - name: Public Catalog
+    description: Public-facing endpoints for Browse products and categories.
   - name: Admin - Products
-    description: (Admin) CRUD completo para la gestión de productos.
+    description: (Admin) Full CRUD for product management.
+  - name: Admin - Categories
+    description: (Admin) Full CRUD for category management.
+  - name: Admin - Suppliers
+    description: (Admin) Full CRUD for supplier management.
   - name: Shopping Cart
-    description: (Usuario Autenticado) Endpoints para la gestión del carrito de compras.
+    description: (Authenticated User) Endpoints for shopping cart management.
   - name: Orders
-    description: (Usuario Autenticado) Endpoints para el checkout y la consulta de pedidos.
+    description: (Authenticated User) Endpoints for checkout and order history.
 
 paths:
+  # --- Authentication ---
   /auth/register:
     post:
       tags: [Authentication]
-      summary: Registrar un nuevo usuario con rol "CLIENTE".
+      summary: Register a new user with the 'CLIENT' role.
       requestBody:
         required: true
         content:
           application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } }
       responses:
         '201':
-          description: Usuario creado exitosamente.
+          description: User created successfully.
           content:
             application/json: { schema: { $ref: '#/components/schemas/User' } }
         '409':
-          description: El email ya está en uso.
+          description: Email is already in use.
           content:
             application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
 
   /auth/login:
     post:
       tags: [Authentication]
-      summary: Iniciar sesión para obtener un token JWT.
+      summary: Login to obtain a JWT.
       requestBody:
         required: true
         content:
           application/json: { schema: { $ref: '#/components/schemas/LoginRequest' } }
       responses:
         '200':
-          description: Login exitoso.
+          description: Login successful.
           content:
             application/json:
-              schema: { type: object, properties: { token: { type: string, description: "Token JWT para autenticación." } } }
+              schema:
+                type: object
+                properties:
+                  token: { type: string, description: "JWT for authentication." }
+                  role: { type: string, description: "User role (CLIENTE or ADMIN)." }
         '401':
-          description: Email o contraseña incorrectos.
+          description: Invalid email or password.
           content:
             application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
 
-  /categorias:
+  # --- Public Catalog ---
+  /categories:
     get:
-      tags: [Catalog]
-      summary: Obtener la lista de todas las categorías de productos.
+      tags: [Public Catalog]
+      summary: Get the list of all product categories.
       responses:
         '200':
-          description: Lista de categorías.
+          description: A list of categories.
           content:
             application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } }
 
-  /productos:
+  /products:
     get:
-      tags: [Catalog]
-      summary: Obtener la lista de todos los productos.
+      tags: [Public Catalog]
+      summary: Get the list of all products.
       responses:
         '200':
-          description: Lista de productos con su categoría anidada.
+          description: A list of products with their nested category.
           content:
             application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ProductResponse' } } }
 
-  /admin/suppliers:
-    get:
-      tags: [Admin - Suppliers]
-      summary: Obtener la lista de todos los proveedores.
-      security: [ { "BearerAuth": [] } ]
-      responses:
-        '200':
-          description: Lista de proveedores.
-          content:
-            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Supplier' } } }
-        '401': { description: "Token no provisto o inválido." }
+  # --- Admin ---
+  /admin/products:
     post:
-      tags: [Admin - Suppliers]
-      summary: Crear un nuevo proveedor.
+      tags: [Admin - Products]
+      summary: Create a new product.
       security: [ { "BearerAuth": [] } ]
       requestBody:
         required: true
         content:
-          application/json: { schema: { $ref: '#/components/schemas/CreateSupplierRequest' } }
+          application/json: { schema: { $ref: '#/components/schemas/ProductRequest' } }
       responses:
-        '201':
-          description: Proveedor creado.
-          content:
-            application/json: { schema: { $ref: '#/components/schemas/Supplier' } }
-        '403': { description: "Acceso denegado (no es admin)." }
+        '201': { description: "Product created.", content: { application/json: { schema: { $ref: '#/components/schemas/Product' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
-  /admin/suppliers/{id}:
+  /admin/products/{id}:
     put:
-      tags: [Admin - Suppliers]
-      summary: Actualizar un proveedor existente.
+      tags: [Admin - Products]
+      summary: Update an existing product.
       security: [ { "BearerAuth": [] } ]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
       requestBody:
         required: true
         content:
-          application/json: { schema: { $ref: '#/components/schemas/Supplier' } }
+          application/json: { schema: { $ref: '#/components/schemas/Product' } }
       responses:
-        '204': { description: "Proveedor actualizado con éxito." }
-        '404': { description: "Proveedor no encontrado." }
+        '200': { description: "Product updated successfully." }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     delete:
-      tags: [Admin - Suppliers]
-      summary: Eliminar un proveedor.
+      tags: [Admin - Products]
+      summary: Delete a product.
       security: [ { "BearerAuth": [] } ]
       parameters:
         - { name: id, in: path, required: true, schema: { type: string } }
       responses:
-        '204': { description: "Proveedor eliminado con éxito." }
-        '404': { description: "Proveedor no encontrado." }
+        '204': { description: "Product deleted successfully." }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
-  # Aquí irían las otras rutas de admin para Categories y Products, siguiendo el mismo patrón...
+  /admin/categories:
+    post:
+      tags: [Admin - Categories]
+      summary: Create a new category.
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/CategoryRequest' } }
+      responses:
+        '201': { description: "Category created.", content: { application/json: { schema: { $ref: '#/components/schemas/Category' } } } }
+        '409': { description: "A category with this name already exists." }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
-  /carrito:
+  /admin/categories/{id}:
+    put:
+      tags: [Admin - Categories]
+      summary: Update an existing category.
+      security: [ { "BearerAuth": [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, description: "The category slug ID" } }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/Category' } }
+      responses:
+        '200': { description: "Category updated successfully." }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Admin - Categories]
+      summary: Delete a category.
+      security: [ { "BearerAuth": [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, description: "The category slug ID" } }
+      responses:
+        '204': { description: "Category deleted successfully." }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # Suppliers routes are omitted for brevity, but would follow the same pattern as products/categories
+
+  # --- Shopping Cart ---
+  /cart:
     get:
       tags: [Shopping Cart]
-      summary: Obtener el contenido del carrito del usuario autenticado.
+      summary: Get the content of the authenticated user's cart.
       security: [ { "BearerAuth": [] } ]
       responses:
         '200':
-          description: Contenido del carrito.
+          description: Cart content.
           content:
             application/json: { schema: { $ref: '#/components/schemas/ShoppingCart' } }
     delete:
       tags: [Shopping Cart]
-      summary: Vaciar el carrito del usuario autenticado.
+      summary: Empty the authenticated user's cart.
       security: [ { "BearerAuth": [] } ]
       responses:
-        '204': { description: "Carrito vaciado con éxito." }
+        '204': { description: "Cart emptied successfully." }
 
-  /carrito/agregar:
+  /cart/add:
     post:
       tags: [Shopping Cart]
-      summary: Añadir un ítem al carrito o incrementar su cantidad.
+      summary: Add an item to the cart or increment its quantity.
       security: [ { "BearerAuth": [] } ]
       requestBody:
         required: true
         content:
-          application/json: { schema: { $ref: '#/components/schemas/ItemCarrito' } }
+          application/json: { schema: { $ref: '#/components/schemas/CartItemRequest' } }
       responses:
         '200':
-          description: Carrito actualizado.
+          description: Updated cart.
           content:
             application/json: { schema: { $ref: '#/components/schemas/ShoppingCart' } }
 
-  /pedidos/checkout:
+  # --- Orders ---
+  /orders/checkout:
     post:
       tags: [Orders]
-      summary: Crea un nuevo pedido a partir del carrito del usuario y lo vacía.
+      summary: Creates a new order from the user's cart and empties it.
       security: [ { "BearerAuth": [] } ]
       responses:
         '201':
-          description: Pedido creado exitosamente.
+          description: Order created successfully.
           content:
-            application/json: { schema: { $ref: '#/components/schemas/Pedido' } }
-        '400': { description: "El carrito está vacío." }
-        '409': { description: "Conflicto, ej. stock insuficiente." }
+            application/json: { schema: { $ref: '#/components/schemas/Order' } }
+        '400': { description: "Cart is empty." }
+        '409': { description: "Conflict, e.g., insufficient stock." }
 
-  /pedidos:
+  /orders:
     get:
       tags: [Orders]
-      summary: Obtener el historial de pedidos del usuario autenticado.
+      summary: Get the authenticated user's order history.
       security: [ { "BearerAuth": [] } ]
       responses:
         '200':
-          description: Lista de pedidos.
+          description: List of orders.
           content:
-            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Pedido' } } }
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Order' } } }
 
+# ===================================================================
+# SECCIÓN DE COMPONENTES REUTILIZABLES
+# Es crucial que esta sección esté presente y correctamente indentada
+# ===================================================================
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: "Introduce el token JWT con el prefijo 'Bearer '. Ejemplo: 'Bearer ey...'"
+      description: "Enter JWT token with 'Bearer ' prefix. e.g. 'Bearer ey...'"
+
+  # AQUI ESTÁN LAS DEFINICIONES QUE FALTABAN
+  responses:
+    Forbidden:
+      description: "Access denied (role is not ADMIN)."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+    NotFound:
+      description: "Resource not found."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
 
   schemas:
     ErrorResponse:
@@ -222,34 +275,47 @@ components:
         email: { type: string, format: email }
         password: { type: string, format: password }
         name: { type: string }
+
     Category:
       type: object
+      required: [id, name]
       properties:
-        id: { type: string }
+        id: { type: string, description: "Unique slug-like identifier." }
         name: { type: string }
         imageUrl: { type: string, format: url, nullable: true }
-    Supplier:
+    CategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        imageUrl: { type: string, format: url, nullable: true }
+
+    Product:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        contactPerson: { type: string, nullable: true }
-        phone: { type: string, nullable: true }
-        email: { type: string, format: email, nullable: true }
-        cbu: { type: string, nullable: true }
-        aliasCbu: { type: string, nullable: true }
-        notes: { type: string, nullable: true }
-    CreateSupplierRequest:
-      type: object
-      properties: # Similar a Supplier pero sin el ID
-        name: { type: string }
-        contactPerson: { type: string, nullable: true }
-        # ...etc
+        description: { type: string }
+        price: { type: number, format: double }
+        mainImageUrl: { type: string, format: url }
+        categoryId: { type: string }
+        stockQuantity: { type: integer }
+        supplierId: { type: string, nullable: true }
+        costPrice: { type: number, format: double }
+        isConsigned: { type: boolean }
     ProductRequest:
       type: object
-      properties: # Similar a Product pero sin el ID
+      required: [name, description, price, mainImageUrl, categoryId, stockQuantity, costPrice, isConsigned]
+      properties:
         name: { type: string }
-        # ...etc
+        description: { type: string }
+        price: { type: number, format: double }
+        mainImageUrl: { type: string, format: url }
+        categoryId: { type: string }
+        stockQuantity: { type: integer }
+        supplierId: { type: string, nullable: true }
+        costPrice: { type: number, format: double }
+        isConsigned: { type: boolean }
     ProductResponse:
       type: object
       properties:
@@ -257,14 +323,14 @@ components:
         name: { type: string }
         description: { type: string }
         price: { type: number, format: double }
-        mainImageUrl: { type: string, format: url }
+        mainImageUrl: { type:string, format: url }
         stockQuantity: { type: integer }
-        category: { $ref: '#/components/schemas/Category' }
         supplierId: { type: string, nullable: true }
-        pricingType: { type: string, enum: [FIXED_COST, CONSIGNMENT] }
         costPrice: { type: number, format: double, nullable: true }
-        profitPercentage: { type: number, format: double, nullable: true }
-    ItemCarrito:
+        isConsigned: { type: boolean }
+        category: { $ref: '#/components/schemas/Category' }
+
+    CartItemRequest:
       type: object
       required: [productId, cantidad]
       properties:
@@ -273,7 +339,17 @@ components:
     ShoppingCart:
       type: object
       properties:
-        items: { type: array, items: { $ref: '#/components/schemas/ItemCarrito' } }
+        items: { type: array, items: { $ref: '#/components/schemas/CartItemRequest' } }
+
+    Order:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        usuarioId: { type: string, format: uuid }
+        fechaPedido: { type: integer, format: int64, description: "UNIX Timestamp" }
+        estado: { type: string }
+        total: { type: number, format: double }
+        items: { type: array, items: { $ref: '#/components/schemas/ItemPedido' } }
     ItemPedido:
       type: object
       properties:
@@ -281,12 +357,3 @@ components:
         nombreProducto: { type: string }
         cantidad: { type: integer }
         precioUnitario: { type: number, format: double }
-    Pedido:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        usuarioId: { type: string, format: uuid }
-        fechaPedido: { type: integer, format: int64, description: "Timestamp UNIX" }
-        estado: { type: string }
-        total: { type: number, format: double }
-        items: { type: array, items: { $ref: '#/components/schemas/ItemPedido' } }

@@ -18,10 +18,10 @@ data class Supplier(
 @Serializable
 data class CreateSupplierRequest(
     val name: String,
-    val contactPerson: String?,
-    val phone: String?,
-    val email: String?,
-    val cbu: String?,
-    val aliasCbu: String?,
-    val notes: String?
+    val contactPerson: String? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val cbu: String? = null,
+    val aliasCbu: String? = null,
+    val notes: String? = null
 )

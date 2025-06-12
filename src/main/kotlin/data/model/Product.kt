@@ -23,7 +23,7 @@ data class ProductRequest(
     val mainImageUrl: String,
     val categoryId: String,
     val stockQuantity: Int,
-    val supplierId: String?,
+    val supplierId: String? = null,
     val costPrice: Double,
     val isConsigned: Boolean,
 )

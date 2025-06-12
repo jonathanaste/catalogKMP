@@ -21,7 +21,7 @@ fun Route.productRouting() {
     // Instanciamos el repositorio. En una app más grande, usaríamos inyección de dependencias (Koin).
     val repository: ProductRepository by inject()
 
-    route("/productos") {
+    route("/products") {
         // GET /productos - Obtener todos los productos
         get {
             val products = repository.getAllProducts()
@@ -40,7 +40,7 @@ fun Route.productRouting() {
 
     // Rutas de Administración - Protegidas en el futuro
     authenticate("auth-jwt") {
-        route("/admin/productos") {
+        route("/admin/products") {
             get {
                 val products = repository.getAllProducts()
                 call.respond(products)

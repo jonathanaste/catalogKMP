@@ -20,7 +20,7 @@ import kotlin.getValue
 fun Route.categoryRouting() {
     val repository: CategoryRepository by inject()
 
-    route("/categorias") {
+    route("/categories") {
         // GET /categorias - Público
         get {
             val categories = repository.getAllCategories()
@@ -39,7 +39,7 @@ fun Route.categoryRouting() {
 
     // Rutas de Administración para Categorías
     authenticate("auth-jwt") {
-        route("/admin/categorias") {
+        route("/admin/categories") {
 
             // GET /categorias - Público
             get {
