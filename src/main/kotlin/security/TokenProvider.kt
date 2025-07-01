@@ -2,14 +2,18 @@ package security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.example.data.model.User
-import io.ktor.server.config.*
 import java.util.*
 
-class TokenProvider(config: ApplicationConfig) {
-    private val audience = config.property("jwt.audience").getString()
-    private val secret = System.getenv("KTOR_JWT_SECRET") ?: config.property("jwt.secret").getString()
-    private val issuer = config.property("jwt.issuer").getString()
+class TokenProvider {
+    private val audience = System.getenv("KTOR_JWT_AUDIENCE")
+        ?: throw RuntimeException("Missing environment variable KTOR_JWT_AUDIENCE")
+    private val secret = System.getenv("KTOR_JWT_SECRET")
+        ?: throw RuntimeException("Missing environment variable KTOR_JWT_SECRET")
+    private val issuer = System.getenv("KTOR_JWT_ISSUER")
+        ?: throw RuntimeException("Missing environment variable KTOR_JWT_ISSUER")
     private val expirationDate = 36_000_00 * 24 // 24 horas en milisegundos
 
     fun generateToken(user: User): String {

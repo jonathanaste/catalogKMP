@@ -56,4 +56,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:2.3.12")
 
     implementation("io.ktor:ktor-server-swagger:2.3.12")
+
+    // For structured JSON logging
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 }

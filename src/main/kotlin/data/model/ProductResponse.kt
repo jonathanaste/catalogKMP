@@ -14,5 +14,7 @@ data class ProductResponse(
     val supplierId: String?,
     val costPrice: Double,
     val isConsigned: Boolean,
-    val category: Category // <-- Aquí está la magia: un objeto Category completo
+    val category: Category, // <-- Aquí está la magia: un objeto Category completo
+    val hasVariants: Boolean = false,
+    val variants: List<ProductVariant>? = null
 )

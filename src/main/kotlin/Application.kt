@@ -18,12 +18,15 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
 import routes.supplierRouting
+import com.example.plugins.CorrelationIdPlugin // Import the new plugin
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
 }
 
 fun Application.module() {
+
+    install(CorrelationIdPlugin) // Install the CorrelationIdPlugin first
 
     install(Koin) {
         slf4jLogger() // Logger para ver qué está haciendo Koin
@@ -72,10 +75,10 @@ fun Application.module() {
     }
 
 
-    DatabaseFactory.init(environment.config)
+    DatabaseFactory.init()
 
     // Creamos una única instancia del proveedor de tokens
-    val tokenProvider = TokenProvider(environment.config)
+    val tokenProvider = TokenProvider()
     configureSerialization()
     configureStatusPages()
     configureSecurity()

@@ -66,11 +66,11 @@ fun Route.productRouting() {
 
                 // Si call.receive falla, Ktor lanzará una excepción.
                 // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
-                val request = call.receive<ProductRequest>() // <-- ¡Ahora espera un ProductRequest!
+                val request = call.receive<ProductRequest>()
 
-                // 2. Creamos el objeto Product completo, generando el ID en el servidor.
+                // Map ProductRequest to Product domain model, including variants
                 val productToCreate = Product(
-                    id = UUID.randomUUID().toString(),
+                    id = UUID.randomUUID().toString(), // ID for the main product
                     name = request.name,
                     description = request.description,
                     price = request.price,
@@ -80,11 +80,33 @@ fun Route.productRouting() {
                     supplierId = request.supplierId,
                     costPrice = request.costPrice,
                     isConsigned = request.isConsigned,
+                    hasVariants = request.variants?.isNotEmpty() ?: false,
+                    variants = request.variants?.map { vr ->
+                        ProductVariant(
+                            id = UUID.randomUUID().toString(), // Generate ID for each new variant
+                            productId = "", // Will be set by repository or this should be the main product ID
+                            sku = vr.sku,
+                            name = vr.name,
+                            price = vr.price,
+                            stockQuantity = vr.stockQuantity,
+                            attributes = vr.attributes,
+                            imageUrl = vr.imageUrl
+                        )
+                    }
+                )
+                // The productId in ProductVariant should ideally be the productToCreate.id.
+                // Let's ensure the repository handles setting this if it's passed as empty,
+                // or we set it here. The repository `addProduct` expects `product.id` to be used.
+                // So, the ProductVariant's productId should be productToCreate.id
+                val finalProductToCreate = productToCreate.copy(
+                    variants = productToCreate.variants?.map { it.copy(productId = productToCreate.id) }
                 )
 
-                // 3. Pasamos el objeto completo al repositorio para guardarlo.
-                val newProduct = repository.addProduct(productToCreate)
-                call.respond(HttpStatusCode.Created, newProduct)
+                val newProduct = repository.addProduct(finalProductToCreate)
+                // The repository addProduct returns a Product. We should ideally return a ProductResponse.
+                // For now, let's assume the client can handle the Product model or this will be refined.
+                // To return ProductResponse, we'd need to fetch it again or enhance repository.
+                call.respond(HttpStatusCode.Created, newProduct) // Consider mapping to ProductResponse
             }
 
             // PUT /admin/productos/{id} - Actualizar un producto existente
@@ -101,13 +123,30 @@ fun Route.productRouting() {
                 )
 
                 // Si call.receive falla, Ktor lanzará una excepción.
-                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
-                val productRequest = call.receive<Product>()
-                val updated = repository.updateProduct(id, productRequest)
+                val receivedProduct = call.receive<Product>() // Client sends a Product object for update
+
+                // Ensure productId in variants matches the main product ID.
+                // Generate IDs for any new variants (those without an ID or with a placeholder).
+                // The repository update logic expects all incoming variants to have IDs.
+                val processedVariants = receivedProduct.variants?.map { variant ->
+                    val variantId = if (variant.id.isNullOrBlank() || variant.id == "new") UUID.randomUUID().toString() else variant.id
+                    variant.copy(id = variantId, productId = id)
+                }
+
+                val productToUpdate = receivedProduct.copy(
+                    id = id, // Ensure the ID from the path is used
+                    hasVariants = processedVariants?.isNotEmpty() ?: false,
+                    variants = processedVariants
+                )
+
+                val updated = repository.updateProduct(id, productToUpdate)
                 if (updated) {
-                    call.respond(HttpStatusCode.OK)
+                    // Consider returning the updated ProductResponse
+                    call.respond(HttpStatusCode.OK, "Producto actualizado correctamente.") // Returning ProductResponse would be better
                 } else {
-                    throw com.example.plugins.NotFoundException("Se requiere rol de Administrador.")
+                    // The original code threw NotFoundException with a generic admin message.
+                    // It should be specific to product not found or update failure.
+                    throw NotFoundException("Producto con id $id no encontrado o no se pudo actualizar.")
                 }
             }
 

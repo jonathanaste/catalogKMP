@@ -32,9 +32,33 @@ object ProductsTable : Table("products") {
     val mainImageUrl = varchar("main_image_url", 1024)
     val categoryId = varchar("category_id", 128).references(CategoriesTable.id)
     val stockQuantity = integer("stock_quantity")
-    val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable() // <-- AÑADE ESTA LÍNEA
+    val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable()
     val costPrice = double("cost_price")
     val isConsigned = bool("is_consigned")
+    val hasVariants = bool("has_variants").default(false) // New column
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object ProductVariantsTable : Table("product_variants") {
+    val id = varchar("id", 128)
+    val productId = varchar("product_id", 128).references(ProductsTable.id)
+    val sku = varchar("sku", 100).nullable().uniqueIndex()
+    val name = varchar("name", 255).nullable()
+    val price = double("price")
+    val stockQuantity = integer("stock_quantity").default(0)
+    // For JSONB attributes, store as text and handle serialization/deserialization in code
+    // Alternatively, use a custom column type if a library for Exposed+JSONB is available
+    val attributes = text("attributes").nullable()
+    val imageUrl = varchar("image_url", 1024).nullable()
+    // Exposed doesn't automatically handle created_at/updated_at unless using specific extensions
+    // or manually setting them. The DB schema handles this with DEFAULT NOW() and triggers.
+    // We can add them here if we intend to set them from Kotlin code as well,
+    // but for now, we rely on DB defaults/triggers from V2 migration.
+    // val createdAt = datetime("created_at").defaultExpression(CurrentDateTime())
+    // val updatedAt = datetime("updated_at").defaultExpression(CurrentDateTime())
+
+
     override val primaryKey = PrimaryKey(id)
 }
 

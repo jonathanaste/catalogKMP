@@ -9,12 +9,17 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 object DatabaseFactory {
-    fun init(config: ApplicationConfig) {
-        val driver = config.property("database.driver").getString()
-        val url = config.property("database.url").getString()
-        val user = config.property("database.user").getString()
-        val userPassword = config.property("database.password").getString()
-        val maxPoolSize = config.property("database.maxPoolSize").getString().toInt()
+    fun init() {
+        val driver = System.getenv("KTOR_DATABASE_DRIVER")
+            ?: throw RuntimeException("Missing environment variable KTOR_DATABASE_DRIVER")
+        val url = System.getenv("KTOR_DATABASE_URL")
+            ?: throw RuntimeException("Missing environment variable KTOR_DATABASE_URL")
+        val user = System.getenv("KTOR_DATABASE_USER")
+            ?: throw RuntimeException("Missing environment variable KTOR_DATABASE_USER")
+        val userPassword = System.getenv("KTOR_DATABASE_PASSWORD")
+            ?: throw RuntimeException("Missing environment variable KTOR_DATABASE_PASSWORD")
+        val maxPoolSize = System.getenv("KTOR_DATABASE_MAX_POOL_SIZE")?.toIntOrNull()
+            ?: throw RuntimeException("Missing or invalid environment variable KTOR_DATABASE_MAX_POOL_SIZE")
 
         val hikariConfig = HikariConfig().apply {
             driverClassName = driver

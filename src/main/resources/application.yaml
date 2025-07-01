@@ -3,14 +3,32 @@ ktor:
     modules:
       - com.example.ApplicationKt.module
   deployment:
+    # Default port. Can be overridden by the KTOR_DEPLOYMENT_PORT environment variable
+    # or by the -port command-line argument when using EngineMain.
     port: 8080
+
+# Database configuration is now primarily driven by environment variables:
+# KTOR_DATABASE_DRIVER
+# KTOR_DATABASE_URL
+# KTOR_DATABASE_USER
+# KTOR_DATABASE_PASSWORD
+# KTOR_DATABASE_MAX_POOL_SIZE
+# Example placeholder values (actual values should be set via environment variables):
 database:
-  driver: "org.postgresql.Driver"
-  url: "jdbc:postgresql://localhost:5432/catalogo_db"
-  user: "ktalogdb"
-  password: "Nx.695"
-  maxPoolSize: 10
+  driver: "org.postgresql.Driver" # Example: org.postgresql.Driver
+  url: "jdbc:postgresql://localhost:5432/catalogo_db" # Example: jdbc:postgresql://localhost:5432/mydatabase
+  user: "ktalogdb" # Example: dbuser
+  # password: "YOUR_DB_PASSWORD" # SET VIA KTOR_DATABASE_PASSWORD environment variable
+  maxPoolSize: 10 # Example: 10
+
+# JWT configuration is now primarily driven by environment variables:
+# KTOR_JWT_ISSUER
+# KTOR_JWT_AUDIENCE
+# KTOR_JWT_SECRET
+# KTOR_JWT_REALM
+# Example placeholder values (actual values should be set via environment variables):
 jwt:
-  issuer: "http://0.0.0.0:8080"
-  audience: "catalogo-app-users"
-  realm: "Catalogo App"
+  issuer: "http://0.0.0.0:8080" # Example: http://localhost:8080 or your production URL
+  audience: "catalogo-app-users" # Example: my-app-users
+  # secret: "YOUR_JWT_SECRET" # SET VIA KTOR_JWT_SECRET environment variable
+  realm: "Catalogo App" # Example: My Application Realm
