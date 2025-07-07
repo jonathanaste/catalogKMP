@@ -41,13 +41,29 @@ object ProductsTable : Table("products") {
 object UsersTable : Table("users") {
     val id = varchar("id", 128)
     val email = varchar("email", 255).uniqueIndex()
-    val passwordHash = varchar("password_hash", 512) // NUNCA guardes contraseñas en texto plano
-    val name = varchar("name", 255)
-    val role = varchar("role", 50) // "CLIENTE", "ADMIN"
+    val passwordHash = varchar("password_hash", 512)
+    val firstName = varchar("first_name", 255) // <-- UPDATED
+    val lastName = varchar("last_name", 255)  // <-- UPDATED
+    val phone = varchar("phone", 50).nullable() // <-- NEW
+    val role = varchar("role", 50) // e.g. "CLIENT", "ADMIN"
 
     override val primaryKey = PrimaryKey(id)
 }
 
+// --- NEW TABLE DEFINITION ---
+object AddressesTable : Table("addresses") {
+    val id = varchar("id", 128)
+    val userId = varchar("user_id", 128).references(UsersTable.id)
+    val alias = varchar("alias", 100)
+    val street = varchar("street", 255)
+    val number = varchar("number", 50)
+    val postalCode = varchar("postal_code", 50)
+    val city = varchar("city", 100)
+    val state = varchar("state", 100)
+    val isDefault = bool("is_default").default(false)
+
+    override val primaryKey = PrimaryKey(id)
+}
 // Tabla para Pedidos, basada en data class Pedido
 object OrdersTable : Table("orders") {
     val id = varchar("id", 128)
