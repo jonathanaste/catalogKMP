@@ -1,7 +1,6 @@
 package routes
 
 import com.example.data.model.ProductRequest
-import com.example.data.model.Product
 import com.example.data.repository.ProductRepository
 import com.example.plugins.ForbiddenException
 import io.ktor.http.*
@@ -15,121 +14,81 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
-import java.util.UUID
 
 fun Route.productRouting() {
-    // Instanciamos el repositorio. En una app más grande, usaríamos inyección de dependencias (Koin).
     val repository: ProductRepository by inject()
 
     route("/products") {
-        // GET /productos - Obtener todos los productos
+        // GET /products - Get all products (Public)
         get {
+            // The repository now directly returns the correct Product DTO.
             val products = repository.getAllProducts()
             call.respond(products)
         }
 
-        // GET /productos/{id} - Obtener un producto por su ID
+        // GET /products/{id} - Get a single product by its ID (Public)
         get("{id}") {
-            val id = call.parameters["id"] ?: throw BadRequestException("ID de producto no encontrado")
-
-            val product = repository.getProductById(id) ?: throw NotFoundException("No se encontró producto con id $id")
-
+            val id = call.parameters["id"] ?: throw BadRequestException("Product ID is missing.")
+            // The repository now directly returns the correct Product DTO.
+            val product = repository.getProductById(id) ?: throw NotFoundException("Product with id $id not found.")
             call.respond(product)
         }
     }
 
-    // Rutas de Administración - Protegidas en el futuro
+    // --- Admin Routes ---
     authenticate("auth-jwt") {
         route("/admin/products") {
-            get {
-                val products = repository.getAllProducts()
-                call.respond(products)
-            }
 
-            // GET /productos/{id} - Obtener un producto por su ID
-            get("{id}") {
-                val id = call.parameters["id"] ?: throw BadRequestException("ID de producto no encontrado")
-
-                val product =
-                    repository.getProductById(id) ?: throw NotFoundException("No se encontró producto con id $id")
-
-                call.respond(product)
-            }
-            // POST /admin/productos - Crear un nuevo producto
+            // POST /admin/products - Create a new product
             post {
-                // --- INICIO DE LA VERIFICACIÓN DE ROL ---
                 val principal = call.principal<JWTPrincipal>()
                 if (principal?.getClaim("role", String::class) != "ADMIN") {
-                    throw ForbiddenException("Se requiere rol de Administrador.")
+                    throw ForbiddenException("Administrator role required.")
                 }
-                // --- FIN DE LA VERIFICACIÓN DE ROL ---
 
-                // Si call.receive falla, Ktor lanzará una excepción.
-                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
-                val request = call.receive<ProductRequest>() // <-- ¡Ahora espera un ProductRequest!
+                // Receive the updated ProductRequest DTO.
+                val request = call.receive<ProductRequest>()
 
-                // 2. Creamos el objeto Product completo, generando el ID en el servidor.
-                val productToCreate = Product(
-                    id = UUID.randomUUID().toString(),
-                    name = request.name,
-                    description = request.description,
-                    price = request.price,
-                    mainImageUrl = request.mainImageUrl,
-                    categoryId = request.categoryId,
-                    stockQuantity = request.stockQuantity,
-                    supplierId = request.supplierId,
-                    costPrice = request.costPrice,
-                    isConsigned = request.isConsigned,
-                )
-
-                // 3. Pasamos el objeto completo al repositorio para guardarlo.
-                val newProduct = repository.addProduct(productToCreate)
+                // The repository now handles the creation logic.
+                val newProduct = repository.addProduct(request)
                 call.respond(HttpStatusCode.Created, newProduct)
             }
 
-            // PUT /admin/productos/{id} - Actualizar un producto existente
+            // PUT /admin/products/{id} - Update an existing product
             put("{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                val userRole = principal?.getClaim("role", String::class)
-                if (userRole != "ADMIN") {
-                    throw ForbiddenException("Se requiere rol de Administrador.")
+                if (principal?.getClaim("role", String::class) != "ADMIN") {
+                    throw ForbiddenException("Administrator role required.")
                 }
 
-                val id = call.parameters["id"] ?: return@put call.respond(
-                    HttpStatusCode.BadRequest,
-                    "ID de producto faltante"
-                )
+                val id = call.parameters["id"] ?: throw BadRequestException("Product ID is missing.")
 
-                // Si call.receive falla, Ktor lanzará una excepción.
-                // Nuestro plugin StatusPages la capturará y devolverá una respuesta 400 o 500 estandarizada
-                val productRequest = call.receive<Product>()
-                val updated = repository.updateProduct(id, productRequest)
+                // Receive the updated ProductRequest DTO for the update operation.
+                val request = call.receive<ProductRequest>()
+
+                val updated = repository.updateProduct(id, request)
                 if (updated) {
                     call.respond(HttpStatusCode.OK)
                 } else {
-                    throw com.example.plugins.NotFoundException("Se requiere rol de Administrador.")
+                    throw NotFoundException("Product with id $id not found.")
                 }
             }
 
-            // DELETE /admin/productos/{id} - Eliminar un producto
+            // DELETE /admin/products/{id} - Delete a product
             delete("{id}") {
                 val principal = call.principal<JWTPrincipal>()
-                val userRole = principal?.getClaim("role", String::class)
-                if (userRole != "ADMIN") {
-                    throw ForbiddenException("Se requiere rol de Administrador.")
-                }
-                val id = requireNotNull(call.parameters["id"]) {
-                    "El ID del producto no puede ser nulo."
+                if (principal?.getClaim("role", String::class) != "ADMIN") {
+                    throw ForbiddenException("Administrator role required.")
                 }
 
+                val id = call.parameters["id"] ?: throw BadRequestException("Product ID is missing.")
                 val deleted = repository.deleteProduct(id)
 
-                if (!deleted) {
-                    throw NotFoundException("Producto con id $id no encontrado.")
+                if (deleted) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    throw NotFoundException("Product with id $id not found.")
                 }
-
-                call.respond(HttpStatusCode.NoContent)
-
             }
         }
     }

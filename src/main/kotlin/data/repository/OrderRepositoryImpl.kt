@@ -31,7 +31,7 @@ class OrderRepositoryImpl : OrderRepository {
             // ANTES de procesar el pedido, verificamos el stock
             for (cartItem in cartItems) {
                 val productData = productsFromDb[cartItem.productId]
-                if (productData == null || productData[ProductsTable.stockQuantity] < cartItem.cantidad) {
+                if (productData == null || productData[ProductsTable.currentStock] < cartItem.cantidad) {
                     // Si el producto no existe o no hay stock suficiente, lanzamos un error.
                     // StatusPages lo convertirá en un 409 Conflict para el cliente.
                     throw ConflictException("Stock insuficiente para el producto con ID ${cartItem.productId}")
@@ -78,7 +78,7 @@ class OrderRepositoryImpl : OrderRepository {
                 ProductsTable.update({ ProductsTable.id eq item.productId }) {
                     with(SqlExpressionBuilder) {
                         // it.update(columna, valor_actual - valor_a_restar)
-                        it.update(stockQuantity, stockQuantity - item.cantidad)
+                        it.update(currentStock, currentStock - item.cantidad)
                     }
                 }
             }
