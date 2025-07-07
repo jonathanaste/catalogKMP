@@ -72,15 +72,17 @@ object AddressesTable : Table("addresses") {
 
     override val primaryKey = PrimaryKey(id)
 }
-// Tabla para Pedidos, basada en data class Pedido
+
 object OrdersTable : Table("orders") {
     val id = varchar("id", 128)
     val userId = varchar("user_id", 128).references(UsersTable.id)
     val orderDate = long("order_date")
-    val status = varchar("status", 100) // Ej. "PENDIENTE_PAGO", "PROCESANDO"
+    val status = varchar("status", 100) // e.g., "PENDING_PAYMENT"
     val total = double("total")
     val paymentMethod = varchar("payment_method", 100)
     val shippingMethod = varchar("shipping_method", 100)
+    val shippingAddress = text("shipping_address").nullable() // <-- NEW: Mapped as text for JSON
+    val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
 
     override val primaryKey = PrimaryKey(id)
 }

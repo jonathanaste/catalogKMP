@@ -3,9 +3,8 @@ package data.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Address(
-    val id: String,
-    val alias: String, // "Home", "Office"
+data class AddressRequest(
+    val alias: String,
     val street: String,
     val number: String,
     val postalCode: String,
