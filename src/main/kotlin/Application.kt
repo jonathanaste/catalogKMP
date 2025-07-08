@@ -17,6 +17,7 @@ import com.example.plugins.configureStatusPages
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
+import routes.questionRouting
 import routes.reviewRouting
 import routes.supplierRouting
 import routes.userRouting
@@ -93,5 +94,6 @@ fun Application.module() {
         supplierRouting()
         userRouting()
         reviewRouting()
+        questionRouting()
     }
 }
