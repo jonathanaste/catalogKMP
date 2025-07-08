@@ -3,24 +3,20 @@ package com.example.di
 import com.example.data.repository.*
 import data.repository.AddressRepository
 import data.repository.AddressRepositoryImpl
+import data.repository.ReviewRepository
+import data.repository.ReviewRepositoryImpl
 import org.koin.dsl.module
 
 // Este es nuestro módulo principal de la aplicación
 val appModule = module {
-    // Definimos que cada vez que alguien pida un 'ProductRepository',
-    // Koin debe proporcionar una única instancia (singleton) de 'ProductRepositoryImpl'.
-    single<ProductRepository> { ProductRepositoryImpl() }
 
-    // Hacemos lo mismo para el resto de nuestros repositorios
+    single<ProductRepository> { ProductRepositoryImpl() }
     single<CategoryRepository> { CategoryRepositoryImpl() }
     single<UserRepository> { UserRepositoryImpl() }
-
-    // Asumiendo que ya tienes las implementaciones del carrito y pedidos
     single<CartRepository> { CartRepositoryImpl() }
     single<OrderRepository> { OrderRepositoryImpl() }
-
     single<SupplierRepository> { SupplierRepositoryImpl() }
-
     single<AddressRepository> { AddressRepositoryImpl() }
+    single<ReviewRepository> { ReviewRepositoryImpl() }
 
 }
