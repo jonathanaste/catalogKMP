@@ -1,5 +1,6 @@
 package com.example.data.model
 
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 
 
@@ -125,4 +126,24 @@ object ProductReviewsTable : Table("product_reviews") {
     val date = long("date")
 
     override val primaryKey = PrimaryKey(id)
+}
+
+object ProductQuestionsTable : Table("product_questions") {
+    val id = varchar("id", 128)
+    val productId = varchar("product_id", 128).references(ProductsTable.id)
+    val userId = varchar("user_id", 128).references(UsersTable.id)
+    val userName = varchar("user_name", 255)
+    val questionText = text("question_text")
+    val date = long("date")
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object QuestionAnswersTable : Table("question_answers") {
+    // A question can have only one answer, so questionId is the primary key.
+    val questionId = varchar("question_id", 128).references(ProductQuestionsTable.id, onDelete = ReferenceOption.CASCADE)
+    val answerText = text("answer_text")
+    val date = long("date")
+
+    override val primaryKey = PrimaryKey(questionId)
 }

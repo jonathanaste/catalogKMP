@@ -3,6 +3,8 @@ package com.example.di
 import com.example.data.repository.*
 import data.repository.AddressRepository
 import data.repository.AddressRepositoryImpl
+import data.repository.QuestionRepository
+import data.repository.QuestionRepositoryImpl
 import data.repository.ReviewRepository
 import data.repository.ReviewRepositoryImpl
 import org.koin.dsl.module
@@ -18,5 +20,5 @@ val appModule = module {
     single<SupplierRepository> { SupplierRepositoryImpl() }
     single<AddressRepository> { AddressRepositoryImpl() }
     single<ReviewRepository> { ReviewRepositoryImpl() }
-
+    single<QuestionRepository> { QuestionRepositoryImpl() }
 }
