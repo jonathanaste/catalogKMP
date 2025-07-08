@@ -1,6 +1,8 @@
 package com.example.di
 
 import com.example.data.repository.*
+import data.repository.AddressRepository
+import data.repository.AddressRepositoryImpl
 import org.koin.dsl.module
 
 // Este es nuestro módulo principal de la aplicación
@@ -18,4 +20,7 @@ val appModule = module {
     single<OrderRepository> { OrderRepositoryImpl() }
 
     single<SupplierRepository> { SupplierRepositoryImpl() }
+
+    single<AddressRepository> { AddressRepositoryImpl() }
+
 }

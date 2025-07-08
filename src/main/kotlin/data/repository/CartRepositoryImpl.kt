@@ -1,7 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.model.CartItemsTable
-import com.example.data.model.ItemCarrito
+import com.example.data.model.CartItem
 import com.example.data.model.ShoppingCart
 import com.example.plugins.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
@@ -18,7 +18,7 @@ class CartRepositoryImpl : CartRepository {
         return ShoppingCart(items)
     }
 
-    override suspend fun addToCart(userId: String, item: ItemCarrito): ShoppingCart {
+    override suspend fun addToCart(userId: String, item: CartItem): ShoppingCart {
         dbQuery {
             // Buscamos si el ítem ya existe para este usuario
             val existingItem = CartItemsTable.selectAll()
@@ -30,7 +30,7 @@ class CartRepositoryImpl : CartRepository {
                 CartItemsTable.insert {
                     it[this.userId] = userId
                     it[this.productId] = item.productId
-                    it[this.quantity] = item.cantidad
+                    it[this.quantity] = item.quantity
                 }
             } else {
                 // Si ya existe, actualizamos la cantidad
@@ -38,7 +38,7 @@ class CartRepositoryImpl : CartRepository {
                     (CartItemsTable.userId eq userId) and (CartItemsTable.productId eq item.productId)
                 }) {
                     with(SqlExpressionBuilder) {
-                        it.update(quantity, quantity + item.cantidad)
+                        it.update(quantity, quantity + item.quantity)
                     }
                 }
             }
@@ -61,8 +61,8 @@ class CartRepositoryImpl : CartRepository {
         }
     }
 
-    private fun resultRowToCartItem(row: ResultRow) = ItemCarrito(
+    private fun resultRowToCartItem(row: ResultRow) = CartItem(
         productId = row[CartItemsTable.productId],
-        cantidad = row[CartItemsTable.quantity]
+        quantity = row[CartItemsTable.quantity]
     )
 }

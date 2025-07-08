@@ -26,13 +26,21 @@ object CategoriesTable : Table("categories") {
 
 object ProductsTable : Table("products") {
     val id = varchar("id", 128)
+    val sku = varchar("sku", 255).uniqueIndex() // <-- NEW
     val name = varchar("name", 255)
     val description = text("description")
     val price = double("price")
+    val salePrice = double("sale_price").nullable() // <-- NEW
     val mainImageUrl = varchar("main_image_url", 1024)
+    // For PostgreSQL array type, we can map it to a basic string in Exposed
+    // and handle the conversion in the repository. A custom column type is also possible.
+    val additionalImageUrls = text("additional_image_urls").nullable() // <-- NEW
     val categoryId = varchar("category_id", 128).references(CategoriesTable.id)
-    val stockQuantity = integer("stock_quantity")
-    val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable() // <-- AÑADE ESTA LÍNEA
+    val currentStock = integer("current_stock") // <-- Renamed
+    val weightKg = double("weight_kg").nullable() // <-- NEW
+    val averageRating = double("average_rating").default(0.0) // <-- NEW
+    val reviewCount = integer("review_count").default(0) // <-- NEW
+    val supplierId = varchar("supplier_id", 128).references(SuppliersTable.id).nullable()
     val costPrice = double("cost_price")
     val isConsigned = bool("is_consigned")
     override val primaryKey = PrimaryKey(id)
@@ -64,15 +72,17 @@ object AddressesTable : Table("addresses") {
 
     override val primaryKey = PrimaryKey(id)
 }
-// Tabla para Pedidos, basada en data class Pedido
+
 object OrdersTable : Table("orders") {
     val id = varchar("id", 128)
     val userId = varchar("user_id", 128).references(UsersTable.id)
     val orderDate = long("order_date")
-    val status = varchar("status", 100) // Ej. "PENDIENTE_PAGO", "PROCESANDO"
+    val status = varchar("status", 100) // e.g., "PENDING_PAYMENT"
     val total = double("total")
     val paymentMethod = varchar("payment_method", 100)
     val shippingMethod = varchar("shipping_method", 100)
+    val shippingAddress = text("shipping_address").nullable() // <-- NEW: Mapped as text for JSON
+    val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
 
     override val primaryKey = PrimaryKey(id)
 }

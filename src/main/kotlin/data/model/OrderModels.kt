@@ -1,21 +1,34 @@
 package com.example.data.model
 
+import data.model.Address
 import kotlinx.serialization.Serializable
 
+/**
+ * Represents a single item within a completed order.
+ * Based on the v2.0 Technical Document.
+ */
 @Serializable
-data class ItemPedido(
+data class OrderItem(
     val productId: String,
-    val nombreProducto: String, // Copia del nombre del producto al momento del pedido
-    val cantidad: Int,
-    val precioUnitario: Double // Precio unitario al que se vendió el producto
+    val productName: String, // A snapshot of the product name at the time of purchase
+    val quantity: Int,
+    val unitPrice: Double // The price of the item at the time of purchase
 )
 
+/**
+ * Represents a customer's completed order.
+ * Aligned with the v2.0 Technical Document.
+ */
 @Serializable
-data class Pedido(
+data class Order(
     val id: String,
-    val usuarioId: String,
-    val fechaPedido: Long, // Timestamp UNIX para la fecha y hora
-    val estado: String, // Ej. "PROCESANDO", "ENVIADO", "ENTREGADO"
+    val userId: String,
+    val orderDate: Long, // UNIX Timestamp
+    val status: String, // e.g., PENDING_PAYMENT, PAID, PREPARING, SHIPPED, DELIVERED
     val total: Double,
-    val items: List<ItemPedido> // Lista de ítems incluidos
+    val shippingAddress: Address, // <-- NEW: Full embedded Address object
+    val paymentMethod: String,
+    val shippingMethod: String,
+    val mpPreferenceId: String? = null, // <-- NEW: Mercado Pago Preference ID
+    val items: List<OrderItem>
 )

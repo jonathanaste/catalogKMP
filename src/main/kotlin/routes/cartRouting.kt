@@ -1,6 +1,6 @@
 package com.example.routes
 
-import com.example.data.model.ItemCarrito
+import com.example.data.model.CartItem
 import com.example.data.repository.CartRepository
 import io.ktor.http.*
 import io.ktor.server.application.call
@@ -29,7 +29,7 @@ fun Route.cartRouting() {
             post("/agregar") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
-                val item = call.receive<ItemCarrito>()
+                val item = call.receive<CartItem>()
 
                 val updatedCart = repository.addToCart(userId, item)
                 call.respond(updatedCart)
@@ -39,7 +39,7 @@ fun Route.cartRouting() {
             post("/quitar") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
-                val itemToRemove = call.receive<ItemCarrito>() // Esperamos un objeto con el productId a quitar
+                val itemToRemove = call.receive<CartItem>() // Esperamos un objeto con el productId a quitar
 
                 val updatedCart = repository.removeFromCart(userId, itemToRemove.productId)
                 call.respond(updatedCart)
