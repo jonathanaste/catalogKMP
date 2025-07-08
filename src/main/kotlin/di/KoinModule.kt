@@ -14,7 +14,7 @@ val appModule = module {
 
     single<ProductRepository> { ProductRepositoryImpl() }
     single<CategoryRepository> { CategoryRepositoryImpl() }
-    single<UserRepository> { UserRepositoryImpl() }
+    single<UserRepository> { UserRepositoryImpl(get()) }
     single<CartRepository> { CartRepositoryImpl() }
     single<OrderRepository> { OrderRepositoryImpl() }
     single<SupplierRepository> { SupplierRepositoryImpl() }
