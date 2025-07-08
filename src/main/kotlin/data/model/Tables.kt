@@ -112,3 +112,17 @@ object CartItemsTable : Table("cart_items") {
         uniqueIndex(userId, productId)
     }
 }
+
+object ProductReviewsTable : Table("product_reviews") {
+    val id = varchar("id", 128)
+    val productId = varchar("product_id", 128).references(ProductsTable.id)
+    val userId = varchar("user_id", 128).references(UsersTable.id)
+    val userName = varchar("user_name", 255)
+    val rating = integer("rating")
+    val title = varchar("title", 255)
+    val comment = text("comment")
+    val photoUrls = text("photo_urls").nullable() // Stored as a delimited string or JSON
+    val date = long("date")
+
+    override val primaryKey = PrimaryKey(id)
+}

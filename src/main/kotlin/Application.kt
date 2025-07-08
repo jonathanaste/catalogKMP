@@ -17,7 +17,9 @@ import com.example.plugins.configureStatusPages
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
+import routes.reviewRouting
 import routes.supplierRouting
+import routes.userRouting
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -89,5 +91,7 @@ fun Application.module() {
         cartRouting()
         orderRouting()
         supplierRouting()
+        userRouting()
+        reviewRouting()
     }
 }
