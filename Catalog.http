@@ -1,14 +1,15 @@
-### 1. Registrar un nuevo usuario de prueba
-# Usamos una variable de timestamp para generar un email único cada vez que ejecutamos el test
+###
+# 1. Create the user that will become the admin
+# This will create the user with the default 'CLIENT' role.
 POST http://localhost:8080/auth/register
 Content-Type: application/json
 
 {
-  "email": "admin@labotica.com",
-  "password": "admin",
-  "name": "admin"
+  "email": "admin@example.com",
+  "password": "adminpass",
+  "firstName": "Admin",
+  "lastName": "User"
 }
-
 ### SEPARADOR ###
 
 ### 2. Iniciar sesión con el usuario recién creado
@@ -35,3 +36,109 @@ Content-Type: application/json
 # Si funciona, significa que el login y la generación de JWT también son correctos.
 GET http://localhost:8080/carrito
 Authorization: Bearer {{auth_token}}
+
+
+
+
+###
+# CatalogKMP Test Environment Setup
+#
+# This file sets up the necessary data for running integration tests.
+# It first creates a standard user, then requires a manual database
+# update to promote that user to an ADMIN.
+#
+# How to use:
+# 1. Run request #1 to create the user account.
+# 2. Run the SQL command in request #2 in your database to make the user an admin.
+# 3. Run the rest of the file to log in and create test data.
+###
+
+# --- Variables ---
+@baseUrl = http://localhost:8080
+@adminEmail = admin@example.com
+@adminPassword = adminpass
+@adminToken =
+@categoryId =
+@productId =
+
+###
+# 1. Register the User Account
+# This creates the user with the default 'CLIENTE' role.
+# @name registerAdminUser
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}",
+  "firstName": "Admin",
+  "lastName": "Test"
+}
+
+###
+# 2. (MANUAL STEP) Promote User to Admin
+#
+# You must run the following SQL command in your database to make the user an admin.
+# Connect to your database using `psql -U ktalogdb -d catalogo_db` and run:
+#
+
+# UPDATE users SET role = 'ADMIN' WHERE email = 'admin@example.com';
+#
+
+###
+# 3. Authenticate as Admin to get a token
+# This will only work AFTER you have completed the manual step above.
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+> {%
+    client.global.set("adminToken", response.body.token);
+%}
+
+###
+# 4. Create a Default Category
+# This request uses the token captured from the admin login.
+# @name createCategory
+POST {{baseUrl}}/admin/categories
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImU5NDM0ZmM0LTMzYjktNGNmYi1hMWUyLTczZjFjZGNkZDMwNiIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwMzY1MH0.vRD7_nsiK98IGEltEv4bmDCHU53u2uljPiBaFyVENhI
+
+{
+  "name": "Default Test Category",
+  "imageUrl": "http://example.com/default-category.png"
+}
+
+
+###
+# 5. Create a Test Product
+# This request uses the admin token and the category ID from the previous step.
+# @name createProduct
+POST {{baseUrl}}/admin/products
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImU5NDM0ZmM0LTMzYjktNGNmYi1hMWUyLTczZjFjZGNkZDMwNiIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwMzY1MH0.vRD7_nsiK98IGEltEv4bmDCHU53u2uljPiBaFyVENhI
+
+{
+    "name": "API-Created Test Product",
+    "sku": "MY-AWESOME-SKU-001",
+    "description": "A dynamic product created via HTTP request for testing.",
+    "price": 79.99,
+    "mainImageUrl": "http://example.com/api-product.png",
+    "categoryId": "{{categoryId}}",
+    "currentStock": 150,
+    "supplierId": null,
+    "costPrice": 35.0,
+    "isConsigned": false
+}
+
+> {%
+    client.global.set("productId", response.body.id);
+    client.test("Product created successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+%}

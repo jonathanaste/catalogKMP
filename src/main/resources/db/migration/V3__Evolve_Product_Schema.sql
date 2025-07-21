@@ -12,7 +12,7 @@ ALTER TABLE products ADD COLUMN average_rating DOUBLE PRECISION NOT NULL DEFAULT
 ALTER TABLE products ADD COLUMN review_count INTEGER NOT NULL DEFAULT 0;
 
 -- Using a PostgreSQL text array to store multiple image URLs.
-ALTER TABLE products ADD COLUMN additional_image_urls TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE products ADD COLUMN additional_image_urls TEXT;
 
 -- It's good practice to add a unique constraint to the SKU.
 ALTER TABLE products ADD CONSTRAINT products_sku_unique UNIQUE (sku);

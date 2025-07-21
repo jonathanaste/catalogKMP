@@ -10,7 +10,7 @@ data class ProductResponse(
     val description: String,
     val price: Double,
     val mainImageUrl: String,
-    val stockQuantity: Int,
+    val currentStock: Int,
     val supplierId: String?,
     val costPrice: Double,
     val isConsigned: Boolean,
