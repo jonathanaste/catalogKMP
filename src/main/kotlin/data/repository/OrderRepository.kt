@@ -20,4 +20,7 @@ interface OrderRepository {
      * @return A list of the user's past Orders.
      */
     suspend fun getOrdersForUser(userId: String): List<Order>
+
+    suspend fun updateOrderStatus(orderId: String, newStatus: String): Boolean
+
 }

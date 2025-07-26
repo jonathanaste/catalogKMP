@@ -8,6 +8,7 @@ import data.repository.QuestionRepositoryImpl
 import data.repository.ReviewRepository
 import data.repository.ReviewRepositoryImpl
 import org.koin.dsl.module
+import services.MercadoPagoService
 
 // Este es nuestro módulo principal de la aplicación
 val appModule = module {
@@ -21,4 +22,10 @@ val appModule = module {
     single<AddressRepository> { AddressRepositoryImpl() }
     single<ReviewRepository> { ReviewRepositoryImpl() }
     single<QuestionRepository> { QuestionRepositoryImpl() }
+    single {
+        // Reads the access token from your application.yaml configuration
+        val accessToken =
+            get<io.ktor.server.config.ApplicationConfig>().property("mercado_pago.accessToken").getString()
+        MercadoPagoService(accessToken)
+    }
 }

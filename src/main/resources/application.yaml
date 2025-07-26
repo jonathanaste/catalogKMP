@@ -14,3 +14,6 @@ jwt:
   issuer: "http://0.0.0.0:8080"
   audience: "catalogo-app-users"
   realm: "Catalogo App"
+  secret: "a-very-long-and-secure-random-string-for-your-jwt-secret-key"
+mercado_pago:
+  accessToken: "YOUR_MERCADO_PAGO_ACCESS_TOKEN"

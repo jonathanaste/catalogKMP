@@ -5,8 +5,6 @@ import com.example.plugins.BadRequestException
 import com.example.plugins.ConflictException
 import com.example.plugins.DatabaseFactory.dbQuery
 import data.model.Address
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.selectAll
 import java.util.*
@@ -50,16 +48,16 @@ class OrderRepositoryImpl : OrderRepository {
         val currentTime = System.currentTimeMillis()
         val newStatus = "PENDING_PAYMENT"
 
-        // Create the main order entry
+
         OrdersTable.insert {
             it[id] = newOrderId
             it[this.userId] = userId
             it[orderDate] = currentTime
             it[status] = newStatus
             it[this.total] = total
-            it[paymentMethod] = "MERCADO_PAGO" // Default for now
-            it[shippingMethod] = "DEFAULT_SHIPPING" // Default for now
-            it[this.shippingAddress] = Json.encodeToString(shippingAddress) // Serialize address to JSON string
+            it[paymentMethod] = "MERCADO_PAGO"
+            it[shippingMethod] = "DEFAULT_SHIPPING"
+            it[this.shippingAddress] = shippingAddress // <-- Just pass the object directly
         }
 
         // Insert all order items
@@ -115,8 +113,7 @@ class OrderRepositoryImpl : OrderRepository {
             }
 
         // Deserialize the address from JSON string
-        val addressJson = row[OrdersTable.shippingAddress]
-        val address = addressJson?.let { Json.decodeFromString<Address>(it) }
+        val address = row[OrdersTable.shippingAddress]
             ?: throw IllegalStateException("Shipping address is missing for order $orderId")
 
         return Order(
@@ -131,5 +128,12 @@ class OrderRepositoryImpl : OrderRepository {
             mpPreferenceId = row[OrdersTable.mpPreferenceId],
             items = items
         )
+    }
+
+    // At the end of the OrderRepositoryImpl class
+    override suspend fun updateOrderStatus(orderId: String, newStatus: String): Boolean = dbQuery {
+        OrdersTable.update({ OrdersTable.id eq orderId }) {
+            it[status] = newStatus
+        } > 0
     }
 }

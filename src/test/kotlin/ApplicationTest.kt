@@ -35,7 +35,8 @@ class ApplicationTest {
         val newUser = RegisterRequest(
             email = "test.user.${System.currentTimeMillis()}@example.com", // Email único para cada test
             password = "password123",
-            name = "Test User"
+            firstName = "Test",
+            lastName = "User"
         )
 
         // Hacemos la petición POST a /auth/register

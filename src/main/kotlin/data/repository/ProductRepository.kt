@@ -2,6 +2,7 @@ package com.example.data.repository
 
 import com.example.data.model.Product
 import com.example.data.model.ProductRequest
+import com.example.data.model.ProductResponse
 
 /**
  * Interface for data operations related to products.
@@ -12,14 +13,14 @@ interface ProductRepository {
      * Retrieves all products from the database.
      * @return A list of all products.
      */
-    suspend fun getAllProducts(): List<Product>
+    suspend fun getAllProducts(): List<ProductResponse>
 
     /**
      * Finds a single product by its unique ID.
      * @param id The UUID of the product to find.
      * @return The found [Product] or null if not found.
      */
-    suspend fun getProductById(id: String): Product?
+    suspend fun getProductById(id: String): ProductResponse?
 
     /**
      * Adds a new product to the database.
