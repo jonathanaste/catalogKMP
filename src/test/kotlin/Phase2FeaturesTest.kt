@@ -76,10 +76,16 @@ class Phase2FeaturesTest {
             name = "Testable Super Serum",
             description = "A product created dynamically for testing.",
             price = 99.99,
+            salePrice = 79.99, // <-- ADDED
             mainImageUrl = "http://example.com/product.png",
+            additionalImageUrls = listOf( // <-- ADDED
+                "http://example.com/image2.png",
+                "http://example.com/image3.png"
+            ),
             categoryId = category.id,
             currentStock = 100,
-            supplierId = null,
+            weightKg = 0.5, // <-- ADDED
+            supplierId = null, // This can be null or a valid ID
             costPrice = 50.0,
             isConsigned = false
         )

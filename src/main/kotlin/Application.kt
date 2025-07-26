@@ -22,6 +22,7 @@ import routes.reviewRouting
 import routes.supplierRouting
 import routes.userRouting
 import routes.webhookRouting
+import routes.wishlistRouting
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -97,5 +98,6 @@ fun Application.module() {
         reviewRouting()
         questionRouting()
         webhookRouting()
+        wishlistRouting()
     }
 }
