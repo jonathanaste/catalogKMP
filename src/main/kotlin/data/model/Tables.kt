@@ -1,8 +1,10 @@
 package com.example.data.model
 
+import data.model.Address
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
-
+import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.json.jsonb
 
 object SuppliersTable : Table("suppliers") {
     val id = varchar("id", 128)
@@ -82,7 +84,7 @@ object OrdersTable : Table("orders") {
     val total = double("total")
     val paymentMethod = varchar("payment_method", 100)
     val shippingMethod = varchar("shipping_method", 100)
-    val shippingAddress = text("shipping_address").nullable() // <-- NEW: Mapped as text for JSON
+    val shippingAddress = jsonb<Address>("shipping_address", Json).nullable()
     val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
 
     override val primaryKey = PrimaryKey(id)
@@ -122,7 +124,7 @@ object ProductReviewsTable : Table("product_reviews") {
     val rating = integer("rating")
     val title = varchar("title", 255)
     val comment = text("comment")
-    val photoUrls = text("photo_urls").nullable() // Stored as a delimited string or JSON
+    val photoUrls = text("photo_urls").nullable() // Will be stored as a single delimited string
     val date = long("date")
 
     override val primaryKey = PrimaryKey(id)

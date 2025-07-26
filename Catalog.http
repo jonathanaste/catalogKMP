@@ -34,7 +34,7 @@ Content-Type: application/json
 ### 3. Probar una ruta protegida (ej. obtener el carrito)
 # Esta petición usará el token que guardamos en el paso anterior.
 # Si funciona, significa que el login y la generación de JWT también son correctos.
-GET http://localhost:8080/carrito
+GET http://localhost:8080/cart
 Authorization: Bearer {{auth_token}}
 
 
@@ -107,7 +107,7 @@ Content-Type: application/json
 # @name createCategory
 POST {{baseUrl}}/admin/categories
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImU5NDM0ZmM0LTMzYjktNGNmYi1hMWUyLTczZjFjZGNkZDMwNiIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwMzY1MH0.vRD7_nsiK98IGEltEv4bmDCHU53u2uljPiBaFyVENhI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImY2MDU2MjUyLTEwNGItNGMwNi1hMDkyLWZmYzk0NDY4NjY1YSIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwNTM4NX0.kFKodRgNrocVyr9nD7g7DcbUyJlz8i8wErUxOGNEUOQ
 
 {
   "name": "Default Test Category",
@@ -121,7 +121,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nb
 # @name createProduct
 POST {{baseUrl}}/admin/products
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImU5NDM0ZmM0LTMzYjktNGNmYi1hMWUyLTczZjFjZGNkZDMwNiIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwMzY1MH0.vRD7_nsiK98IGEltEv4bmDCHU53u2uljPiBaFyVENhI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nby1hcHAtdXNlcnMiLCJpc3MiOiJodHRwOi8vMC4wLjAuMDo4MDgwIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6ImY2MDU2MjUyLTEwNGItNGMwNi1hMDkyLWZmYzk0NDY4NjY1YSIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc1MzIwNTY4Nn0.21Vj-svdXNMw0-0vqefbT1FgUMn0zpfxnznLMoBMfaI
 
 {
     "name": "API-Created Test Product",
@@ -129,7 +129,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJjYXRhbG9nb
     "description": "A dynamic product created via HTTP request for testing.",
     "price": 79.99,
     "mainImageUrl": "http://example.com/api-product.png",
-    "categoryId": "{{categoryId}}",
+    "categoryId": "default-test-category",
     "currentStock": 150,
     "supplierId": null,
     "costPrice": 35.0,

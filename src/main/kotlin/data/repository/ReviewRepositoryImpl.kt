@@ -11,11 +11,8 @@ import java.util.UUID
 class ReviewRepositoryImpl : ReviewRepository {
 
     private fun resultRowToReview(row: ResultRow): ProductReview {
-        val urlsString = row.getOrNull(ProductReviewsTable.photoUrls) ?: "{}"
-        val photoUrls = urlsString
-            .removeSurrounding("{", "}")
-            .split(',')
-            .filter { it.isNotBlank() }
+        val urlsString = row.getOrNull(ProductReviewsTable.photoUrls)
+        val photoUrls = urlsString?.split(',')?.filter { it.isNotBlank() } ?: emptyList()
 
         return ProductReview(
             id = row[ProductReviewsTable.id],
@@ -51,7 +48,7 @@ class ReviewRepositoryImpl : ReviewRepository {
             it[rating] = request.rating
             it[title] = request.title
             it[comment] = request.comment
-            it[photoUrls] = "{${request.photoUrls.joinToString(",")}}"
+            it[photoUrls] = request.photoUrls.joinToString(",")
             it[date] = currentTime
         }
 

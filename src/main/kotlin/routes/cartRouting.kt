@@ -15,7 +15,7 @@ fun Route.cartRouting() {
     val repository: CartRepository by inject()
 
     authenticate("auth-jwt") {
-        route("/carrito") {
+        route("/cart") {
             // Obtener el carrito del usuario actual
             get {
                 val principal = call.principal<JWTPrincipal>()!!

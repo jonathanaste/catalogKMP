@@ -47,14 +47,23 @@ fun Route.orderRouting() {
                 // 3. Create the order in the database with the fetched address
                 val newOrder = orderRepository.createOrder(userId, cart.items, shippingAddress)
 
-                // 4. FUTURE STEP: Integrate with Mercado Pago API
-                // This section will be implemented in a future ticket. For now, we use placeholders
-                // to establish the API contract as defined in the roadmap [cite: 196-201].
-                val mercadoPagoPreferenceId = "mp-pref-${newOrder.id}" // Placeholder ID
-                val mercadoPagoInitPoint = "https://mercadopago.com.ar/checkout/v1/redirect?pref_id=$mercadoPagoPreferenceId" // Placeholder URL
+                // 4. Create Payment Preference with Mercado Pago
+                // In a real implementation, you would make an API call here.
+                // val preferenceRequest = MercadoPagoPreferenceRequest(
+                //     items = newOrder.items.map { MercadoPagoItem(it.productName, it.quantity, it.unitPrice) },
+                //     externalReference = newOrder.id, // This is the crucial link
+                //     backUrls = mapOf("success" to "https://yourapp.com/success", "failure" to "https://yourapp.com/failure")
+                // )
+                // val preference = mercadoPagoService.createPreference(preferenceRequest)
 
-                // A future step would also update the order with the real preference ID from MP.
+                // For now, we continue to simulate the response.
+                val mercadoPagoPreferenceId = "mp-pref-for-order-${newOrder.id}" // Simulated ID
+                val mercadoPagoInitPoint =
+                    "https://mercadopago.com.ar/checkout/v1/redirect?pref_id=$mercadoPagoPreferenceId"
+
+                // It's good practice to save the preference ID with the order.
                 // orderRepository.setMercadoPagoPreferenceId(newOrder.id, mercadoPagoPreferenceId)
+
 
                 // 5. Clear the user's cart only after the order is successfully created
                 cartRepository.clearCart(userId)
