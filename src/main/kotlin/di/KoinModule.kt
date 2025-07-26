@@ -7,6 +7,8 @@ import data.repository.QuestionRepository
 import data.repository.QuestionRepositoryImpl
 import data.repository.ReviewRepository
 import data.repository.ReviewRepositoryImpl
+import data.repository.WishlistRepository
+import data.repository.WishlistRepositoryImpl
 import org.koin.dsl.module
 import services.MercadoPagoService
 
@@ -28,4 +30,5 @@ val appModule = module {
             get<io.ktor.server.config.ApplicationConfig>().property("mercado_pago.accessToken").getString()
         MercadoPagoService(accessToken)
     }
+    single<WishlistRepository> { WishlistRepositoryImpl() }
 }

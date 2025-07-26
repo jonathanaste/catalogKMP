@@ -149,3 +149,11 @@ object QuestionAnswersTable : Table("question_answers") {
 
     override val primaryKey = PrimaryKey(questionId)
 }
+
+object WishlistItemsTable : Table("wishlist_items") {
+    val userId = varchar("user_id", 128).references(UsersTable.id, onDelete = ReferenceOption.CASCADE)
+    val productId = varchar("product_id", 128).references(ProductsTable.id, onDelete = ReferenceOption.CASCADE)
+    val dateAdded = long("date_added")
+
+    override val primaryKey = PrimaryKey(userId, productId)
+}
