@@ -10,6 +10,7 @@ import data.model.ResellerProfile
 import data.model.ResellerUpdateRequest
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.selectAll
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
 
@@ -101,5 +102,19 @@ class ResellerRepositoryImpl(
         // Because of the ON DELETE CASCADE constraint, deleting the user
         // will automatically delete their reseller_profile, addresses, etc.
         UsersTable.deleteWhere { UsersTable.id eq userId and (UsersTable.role eq "RESELLER") } > 0
+    }
+
+    override suspend fun findActiveResellerBySlug(slug: String): User? {
+        val userId = dbQuery {
+            ResellerProfilesTable.selectAll()
+                .where { (ResellerProfilesTable.uniqueStoreSlug eq slug) and (ResellerProfilesTable.isActive eq true) }
+                .map { it[ResellerProfilesTable.userId] }.singleOrNull()
+        } ?: return null
+
+        return userRepository.findUserByEmail(
+            dbQuery {
+                UsersTable.selectAll().where { UsersTable.id eq userId }.map { it[UsersTable.email] }.single()
+            }
+        )
     }
 }

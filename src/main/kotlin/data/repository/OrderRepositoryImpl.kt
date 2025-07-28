@@ -19,7 +19,8 @@ class OrderRepositoryImpl(
         userId: String,
         cartItems: List<CartItem>,
         shippingAddress: Address,
-        couponCode: String?
+        couponCode: String?,
+        resellerId: String?
     ): Order = dbQuery {
         if (cartItems.isEmpty()) throw BadRequestException("Cannot create an order from an empty cart.")
 
@@ -83,6 +84,7 @@ class OrderRepositoryImpl(
             it[this.shippingAddress] = shippingAddress
             it[this.couponCode] = validatedCoupon?.code
             it[this.discountAmount] = discountAmount
+            it[this.resellerId] = resellerId
         }
 
         validatedCoupon?.let { coupon ->
@@ -126,7 +128,8 @@ class OrderRepositoryImpl(
             mpPreferenceId = null,
             items = orderItems,
             couponCode = validatedCoupon?.code,
-            discountAmount = discountAmount
+            discountAmount = discountAmount,
+            resellerId = resellerId
         )
     }
 
@@ -166,7 +169,8 @@ class OrderRepositoryImpl(
             mpPreferenceId = row[OrdersTable.mpPreferenceId],
             items = items,
             couponCode = row[OrdersTable.couponCode],
-            discountAmount = row[OrdersTable.discountAmount]
+            discountAmount = row[OrdersTable.discountAmount],
+            resellerId = row[OrdersTable.resellerId]
         )
     }
 

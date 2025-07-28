@@ -88,6 +88,7 @@ object OrdersTable : Table("orders") {
     val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
     val couponCode = varchar("coupon_code", 100).references(CouponsTable.code).nullable()
     val discountAmount = double("discount_amount").nullable()
+    val resellerId = varchar("reseller_id", 128).references(UsersTable.id).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
