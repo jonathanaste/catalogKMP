@@ -180,3 +180,12 @@ object OrderCouponsTable : Table("order_coupons") {
 
     override val primaryKey = PrimaryKey(orderId, couponCode)
 }
+
+object ResellerProfilesTable : Table("reseller_profiles") {
+    val userId = varchar("user_id", 128).references(UsersTable.id, onDelete = ReferenceOption.CASCADE)
+    val uniqueStoreSlug = varchar("unique_store_slug", 100).uniqueIndex()
+    val commissionRate = double("commission_rate").default(20.0)
+    val isActive = bool("is_active").default(true)
+
+    override val primaryKey = PrimaryKey(userId)
+}

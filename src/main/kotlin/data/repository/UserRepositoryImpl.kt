@@ -1,7 +1,11 @@
 package com.example.data.repository
 
-import com.example.data.model.*
+import com.example.data.model.RegisterRequest
+import com.example.data.model.ResellerProfilesTable
+import com.example.data.model.User
+import com.example.data.model.UsersTable
 import com.example.plugins.DatabaseFactory.dbQuery
+import data.model.ResellerProfile
 import data.model.UserProfileUpdateRequest
 import data.repository.AddressRepository
 import org.jetbrains.exposed.sql.ResultRow
@@ -9,21 +13,37 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.mindrot.jbcrypt.BCrypt
-import java.util.UUID
+import java.util.*
 
 class UserRepositoryImpl(private val addressRepository: AddressRepository) : UserRepository {
 
-    private fun resultRowToUser(row: ResultRow) = User(
-        id = row[UsersTable.id],
-        email = row[UsersTable.email],
-        firstName = row[UsersTable.firstName],
-        lastName = row[UsersTable.lastName],
-        phone = row[UsersTable.phone],
-        role = row[UsersTable.role]
-        // The address list is now loaded separately.
-    )
+    private fun resultRowToUser(row: ResultRow): User {
+        // --- NEW: Check for and build the ResellerProfile ---
+        val resellerProfile = if (row.hasValue(ResellerProfilesTable.userId)) {
+            ResellerProfile(
+                userId = row[ResellerProfilesTable.userId],
+                uniqueStoreSlug = row[ResellerProfilesTable.uniqueStoreSlug],
+                commissionRate = row[ResellerProfilesTable.commissionRate],
+                isActive = row[ResellerProfilesTable.isActive]
+            )
+        } else {
+            null
+        }
+
+        return User(
+            id = row[UsersTable.id],
+            email = row[UsersTable.email],
+            firstName = row[UsersTable.firstName],
+            lastName = row[UsersTable.lastName],
+            phone = row[UsersTable.phone],
+            role = row[UsersTable.role],
+            resellerProfile = resellerProfile // Assign the constructed profile
+        )
+    }
 
     override suspend fun registerUser(request: RegisterRequest): User? {
+        // This logic remains unchanged for now, as it only registers CLIENTs.
+        // We will later add a separate admin flow to create resellers.
         if (findUserByEmail(request.email) != null) {
             return null
         }
@@ -35,16 +55,16 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
                 it[firstName] = request.firstName
                 it[lastName] = request.lastName
                 it[phone] = null
-                it[role] = "CLIENT"
+                it[role] = "CLIENT" // New users are clients by default
             }
             resultRowToUser(insertStatement.resultedValues!!.first())
         }
     }
 
-    // This method now fetches the user AND their addresses.
     override suspend fun findUserByEmail(email: String): User? {
         val user = dbQuery {
-            UsersTable
+            // --- MODIFIED QUERY with LEFT JOIN ---
+            (UsersTable leftJoin ResellerProfilesTable)
                 .selectAll().where { UsersTable.email eq email }
                 .map(::resultRowToUser)
                 .singleOrNull()
@@ -59,7 +79,7 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
                 .selectAll().where { UsersTable.email eq email }
                 .map { it[UsersTable.passwordHash] }
                 .singleOrNull()
-        } ?: return false // If no hash is found (user doesn't exist), the password is incorrect.
+        } ?: return false
 
         return BCrypt.checkpw(passwordToCheck, passwordHash)
     }
