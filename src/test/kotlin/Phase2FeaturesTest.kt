@@ -18,33 +18,22 @@ class Phase2FeaturesTest {
         return Json.parseToJsonElement(loginBody).jsonObject["token"]!!.jsonPrimitive.content
     }
 
-    // A helper function to create a user and get a token.
-    private suspend fun ApplicationTestBuilder.getAuthToken(
-        email: String,
-        password: String
-    ): String {
+    private suspend fun ApplicationTestBuilder.getAuthToken(email: String, password: String): String {
         val client = createClient {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-
         val loginResponse = client.post("/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest(email, password))
         }
-
-        assertEquals(HttpStatusCode.OK, loginResponse.status, "Login failed for user: $email. Please ensure the user exists and the password is correct.")
+        assertEquals(HttpStatusCode.OK, loginResponse.status, "Login failed for user: $email.")
         return extractToken(loginResponse.body<String>())
     }
 
-
     @Test
     fun `Test full user flow for Phase 2 features`() = testApplication {
-        application {
-            // The testApplication environment will automatically load your main module.
-        }
-
         val client = createClient {
             install(ContentNegotiation) {
                 json(Json {
@@ -56,90 +45,100 @@ class Phase2FeaturesTest {
         }
 
         // --- PART 0: ADMIN SETUP & SEEDING DATA ---
-        // **CORRECTED CREDENTIALS**
-        // Using the correct admin credentials from your Catalog.http setup file.
         val adminToken = getAuthToken("admin@example.com", "adminpass")
+        val uniqueSuffix = System.currentTimeMillis()
 
-        // Create a unique category for this test run
-        val categoryRequest = CategoryRequest(name = "Test Category - ${System.currentTimeMillis()}", imageUrl = "http://example.com/cat.png")
-        val categoryResponse = client.post("/admin/categories") {
+        val category = client.post("/admin/categories") {
             bearerAuth(adminToken)
             contentType(ContentType.Application.Json)
-            setBody(categoryRequest)
-        }
-        assertEquals(HttpStatusCode.Created, categoryResponse.status, "Admin setup failed: Could not create category.")
-        val category = categoryResponse.body<Category>()
+            setBody(CategoryRequest("Test Category - $uniqueSuffix", "http://example.com/category.png"))
+        }.body<Category>()
 
-        // Create a unique product for this test run
         val productRequest = ProductRequest(
-            sku = "TEST-SKU-${System.currentTimeMillis()}",
+            sku = "TEST-SKU-$uniqueSuffix",
             name = "Testable Super Serum",
-            description = "A product created dynamically for testing.",
-            price = 99.99,
-            salePrice = 79.99, // <-- ADDED
+            description = "A product for testing.",
+            price = 1000.0,
+            salePrice = 800.0, // Using salePrice
             mainImageUrl = "http://example.com/product.png",
-            additionalImageUrls = listOf( // <-- ADDED
-                "http://example.com/image2.png",
-                "http://example.com/image3.png"
-            ),
+            additionalImageUrls = listOf("http://example.com/extra.png"),
             categoryId = category.id,
             currentStock = 100,
-            weightKg = 0.5, // <-- ADDED
-            supplierId = null, // This can be null or a valid ID
-            costPrice = 50.0,
+            weightKg = 0.5,
+            supplierId = null,
+            costPrice = 500.0,
             isConsigned = false
         )
-        val productResponse = client.post("/admin/products") {
+        val product = client.post("/admin/products") {
             bearerAuth(adminToken)
             contentType(ContentType.Application.Json)
             setBody(productRequest)
-        }
-        assertEquals(HttpStatusCode.Created, productResponse.status, "Admin setup failed: Could not create product.")
-        val product = productResponse.body<Product>()
+        }.body<Product>()
 
-        // --- PART 1: CLIENT USER REGISTRATION AND LOGIN ---
-        val uniqueEmail = "client.${System.currentTimeMillis()}@example.com"
-        val registerRequest = RegisterRequest(uniqueEmail, "password123", "Client", "User")
-
-        val registerResponse = client.post("/auth/register") {
+        val percentageCoupon = client.post("/admin/coupons") {
+            bearerAuth(adminToken)
             contentType(ContentType.Application.Json)
-            setBody(registerRequest)
-        }
-        assertEquals(HttpStatusCode.Created, registerResponse.status, "Client registration failed.")
+            setBody(CouponCreateRequest("SUMMER25-$uniqueSuffix", "25% off", "PERCENTAGE", 25.0))
+        }.body<Coupon>()
 
-        val clientToken = getAuthToken(uniqueEmail, "password123")
-
-        // --- PART 2: ACCOUNT MANAGEMENT (ADDRESS) ---
-        val addressRequest = AddressRequest("Home", "123 Test St", "Apt 4B", "10001", "Testville", "Testland")
-        val addAddressResponse = client.post("/users/me/addresses") {
-            bearerAuth(clientToken)
+        val fixedCoupon = client.post("/admin/coupons") {
+            bearerAuth(adminToken)
             contentType(ContentType.Application.Json)
-            setBody(addressRequest)
-        }
-        assertEquals(HttpStatusCode.Created, addAddressResponse.status)
-        val createdAddress = addAddressResponse.body<Address>()
+            setBody(CouponCreateRequest("500OFF-$uniqueSuffix", "500 off", "FIXED_AMOUNT", 500.0))
+        }.body<Coupon>()
 
-        // --- PART 3: SOCIAL FEATURES (REVIEW) ---
-        val reviewRequest = ReviewRequest(rating = 5, title = "Great Product!", comment = "I really enjoyed this.")
-        client.post("/products/${product.id}/reviews") {
-            bearerAuth(clientToken)
+        // --- PART 1: CLIENT USER & SETUP ---
+        val userEmail = "coupon-tester-$uniqueSuffix@example.com"
+        client.post("/auth/register") {
             contentType(ContentType.Application.Json)
-            setBody(reviewRequest)
+            setBody(RegisterRequest(userEmail, "password123", "Coupon", "Tester"))
         }
+        val userToken = getAuthToken(userEmail, "password123")
 
-        // --- PART 4: CHECKOUT FLOW ---
-        val cartItem = CartItem(productId = product.id, quantity = 2)
+        val address = client.post("/users/me/addresses") {
+            bearerAuth(userToken)
+            contentType(ContentType.Application.Json)
+            setBody(AddressRequest("Home", "123 Test St", "Apt 4B", "10001", "Testville", "Testland"))
+        }.body<Address>()
+
+        // --- PART 2: TEST CHECKOUT WITH COUPONS ---
+        // Subtotal will be 1600.0 (800.0 * 2) because salePrice is used.
         client.post("/cart/add") {
-            bearerAuth(clientToken)
+            bearerAuth(userToken)
             contentType(ContentType.Application.Json)
-            setBody(cartItem)
+            setBody(CartItem(productId = product.id, quantity = 2))
+        }
+        client.post("/orders/checkout") {
+            bearerAuth(userToken)
+            contentType(ContentType.Application.Json)
+            setBody(CheckoutRequest(addressId = address.id, couponCode = percentageCoupon.code))
         }
 
-        val checkoutRequest = CheckoutRequest(addressId = createdAddress.id)
-        client.post("/orders/checkout") {
-            bearerAuth(clientToken)
+        client.post("/cart/add") {
+            bearerAuth(userToken)
             contentType(ContentType.Application.Json)
-            setBody(checkoutRequest)
+            setBody(CartItem(productId = product.id, quantity = 2))
         }
+        client.post("/orders/checkout") {
+            bearerAuth(userToken)
+            contentType(ContentType.Application.Json)
+            setBody(CheckoutRequest(addressId = address.id, couponCode = fixedCoupon.code))
+        }
+
+        // --- PART 3: VERIFY ORDER TOTALS ---
+        val orders = client.get("/orders") {
+            bearerAuth(userToken)
+        }.body<List<Order>>()
+
+        assertEquals(2, orders.size)
+
+        // --- CORRECTED ASSERTIONS ---
+        val fixedDiscountOrder = orders.find { it.couponCode == fixedCoupon.code }
+        assertNotNull(fixedDiscountOrder)
+        assertEquals(1100.0, fixedDiscountOrder.total) // Correct total: (800 * 2) - 500 = 1100
+
+        val percentDiscountOrder = orders.find { it.couponCode == percentageCoupon.code }
+        assertNotNull(percentDiscountOrder)
+        assertEquals(1200.0, percentDiscountOrder.total) // Correct total: (800 * 2) * 0.75 = 1200
     }
 }

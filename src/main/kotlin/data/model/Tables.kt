@@ -86,6 +86,8 @@ object OrdersTable : Table("orders") {
     val shippingMethod = varchar("shipping_method", 100)
     val shippingAddress = jsonb<Address>("shipping_address", Json).nullable()
     val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
+    val couponCode = varchar("coupon_code", 100).references(CouponsTable.code).nullable()
+    val discountAmount = double("discount_amount").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -156,4 +158,25 @@ object WishlistItemsTable : Table("wishlist_items") {
     val dateAdded = long("date_added")
 
     override val primaryKey = PrimaryKey(userId, productId)
+}
+
+object CouponsTable : Table("coupons") {
+    val code = varchar("code", 100)
+    val description = text("description")
+    val discountType = varchar("discount_type", 50)
+    val discountValue = double("discount_value")
+    val expirationDate = long("expiration_date").nullable()
+    val usageLimit = integer("usage_limit").nullable()
+    val usageCount = integer("usage_count")
+    val isActive = bool("is_active")
+
+    override val primaryKey = PrimaryKey(code)
+}
+
+object OrderCouponsTable : Table("order_coupons") {
+    val orderId = varchar("order_id", 128).references(OrdersTable.id)
+    val couponCode = varchar("coupon_code", 100).references(CouponsTable.code)
+    val discountAmount = double("discount_amount")
+
+    override val primaryKey = PrimaryKey(orderId, couponCode)
 }

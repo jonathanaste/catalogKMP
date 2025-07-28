@@ -4,5 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CheckoutRequest(
-    val addressId: String
+    val addressId: String,
+    val couponCode: String? = null
 )

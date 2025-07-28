@@ -58,23 +58,43 @@ class QuestionRepositoryImpl : QuestionRepository {
 
     override suspend fun addAnswerToQuestion(questionId: String, request: AnswerRequest): ProductQuestion? {
         val currentTime = System.currentTimeMillis()
-        return dbQuery {
-            // Check if the question exists first
-            val question = ProductQuestionsTable.selectAll().where { ProductQuestionsTable.id eq questionId }.singleOrNull()
-            if (question == null) {
-                return@dbQuery null
-            }
 
-            // Insert the answer
+        // We need the original question data to build the final response object.
+        val originalQuestion = dbQuery {
+            ProductQuestionsTable
+                .selectAll()
+                .where { ProductQuestionsTable.id eq questionId }
+                .singleOrNull()
+                ?.let {
+                    // Manually map to our data class
+                    ProductQuestion(
+                        id = it[ProductQuestionsTable.id],
+                        productId = it[ProductQuestionsTable.productId],
+                        userId = it[ProductQuestionsTable.userId],
+                        userName = it[ProductQuestionsTable.userName],
+                        questionText = it[ProductQuestionsTable.questionText],
+                        date = it[ProductQuestionsTable.date],
+                        answer = null // Answer is not yet present
+                    )
+                }
+        } ?: return null // Return null if the question doesn't exist
+
+        // Now, perform the insert in a separate transaction.
+        dbQuery {
             QuestionAnswersTable.insert {
                 it[this.questionId] = questionId
                 it[answerText] = request.answerText
                 it[date] = currentTime
             }
-
-            // Return the full question with the new answer
-            getQuestionsForProduct(question[ProductQuestionsTable.productId])
-                .find { it.id == questionId }
         }
+
+        // Return the original question, but with the new answer manually added.
+        // This is efficient and avoids transaction visibility issues.
+        return originalQuestion.copy(
+            answer = QuestionAnswer(
+                answerText = request.answerText,
+                date = currentTime
+            )
+        )
     }
 }
