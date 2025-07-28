@@ -6,6 +6,7 @@ import com.example.plugins.BadRequestException
 import com.example.plugins.NotFoundException
 import data.model.CheckoutRequest
 import data.repository.AddressRepository
+import data.repository.ResellerRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -19,6 +20,7 @@ fun Route.orderRouting() {
     val orderRepository: OrderRepository by inject()
     val cartRepository: CartRepository by inject()
     val addressRepository: AddressRepository by inject()
+    val resellerRepository: ResellerRepository by inject()
 
     authenticate("auth-jwt") {
         route("/orders") {
@@ -43,22 +45,28 @@ fun Route.orderRouting() {
                 val shippingAddress = addressRepository.findAddressByIdForUser(userId, request.addressId)
                     ?: throw NotFoundException("Selected address not found or does not belong to the user.")
 
-                // 3. Create the order, passing the optional coupon code to the repository
+                // 3. Securely fetch the resellerOd of exists
+                val resellerId = request.resellerSlug?.let { slug ->
+                    resellerRepository.findActiveResellerBySlug(slug)?.id
+                }
+
+                // 4. Create the order, passing the optional coupon code to the repository
                 val newOrder = orderRepository.createOrder(
                     userId = userId,
                     cartItems = cart.items,
                     shippingAddress = shippingAddress,
-                    couponCode = request.couponCode // <-- THE KEY CHANGE IS HERE
+                    couponCode = request.couponCode,
+                    resellerId = resellerId
                 )
 
-                // 4. Simulate Mercado Pago preference creation
+                // 5. Simulate Mercado Pago preference creation
                 val mercadoPagoPreferenceId = "mp-pref-${newOrder.id}"
                 val mercadoPagoInitPoint = "https://mercadopago.com.ar/checkout/v1/redirect?pref_id=$mercadoPagoPreferenceId"
 
-                // 5. Clear the user's cart
+                // 6. Clear the user's cart
                 cartRepository.clearCart(userId)
 
-                // 6. Respond with the redirect URL
+                // 7. Respond with the redirect URL
                 call.respond(HttpStatusCode.Created, mapOf("init_point" to mercadoPagoInitPoint))
             }
 

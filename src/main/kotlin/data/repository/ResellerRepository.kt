@@ -34,4 +34,11 @@ interface ResellerRepository {
      * @return True if the deletion was successful, false otherwise.
      */
     suspend fun deleteReseller(userId: String): Boolean // <-- ADD THIS
+
+    /**
+     * Finds an active reseller by their unique store slug.
+     * @return The User object, or null if no active reseller is found with that slug.
+     */
+    suspend fun findActiveResellerBySlug(slug: String): User? // <-- ADD THIS
+
 }

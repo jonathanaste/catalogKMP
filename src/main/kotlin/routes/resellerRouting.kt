@@ -2,6 +2,7 @@ package routes
 
 import com.example.plugins.ConflictException
 import data.model.ResellerCreateRequest
+import data.model.ResellerStoreResponse
 import data.model.ResellerUpdateRequest
 import data.repository.ResellerRepository
 import io.ktor.http.*
@@ -80,6 +81,40 @@ fun Route.resellerRouting() {
                 } else {
                     throw NotFoundException("Reseller with ID $id not found.")
                 }
+            }
+        }
+        route("/reseller/me") {
+            // Interceptor to ensure only RESELLERs can access these routes
+            intercept(ApplicationCallPipeline.Call) {
+                val principal = call.principal<JWTPrincipal>()
+                if (principal?.getClaim("role", String::class) != "RESELLER") {
+                    call.respond(HttpStatusCode.Forbidden, "Reseller role required.")
+                    return@intercept finish()
+                }
+            }
+
+            /**
+             * GET /reseller/me/store - Get the authenticated reseller's store details
+             */
+            get("/store") {
+                val principal = call.principal<JWTPrincipal>()!!
+                val userId = principal.getClaim("userId", String::class)!!
+
+                val reseller = repository.findResellerById(userId)
+                    ?: throw NotFoundException("Reseller profile not found for the authenticated user.")
+
+                // The base URL should ideally come from configuration, but this is a simple start.
+                val baseUrl = "${call.request.local.scheme}://${call.request.local.serverHost}:${call.request.local.serverPort}"
+
+                val response = ResellerStoreResponse(
+                    resellerName = "${reseller.firstName} ${reseller.lastName}",
+                    uniqueStoreSlug = reseller.resellerProfile!!.uniqueStoreSlug,
+                    storeUrl = "$baseUrl/store/${reseller.resellerProfile.uniqueStoreSlug}",
+                    commissionRate = reseller.resellerProfile.commissionRate,
+                    isActive = reseller.resellerProfile.isActive
+                )
+
+                call.respond(response)
             }
         }
     }
