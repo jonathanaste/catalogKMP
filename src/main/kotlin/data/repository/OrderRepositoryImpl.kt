@@ -5,13 +5,22 @@ import com.example.plugins.BadRequestException
 import com.example.plugins.ConflictException
 import com.example.plugins.DatabaseFactory.dbQuery
 import data.model.Address
+import data.model.Coupon
+import data.repository.CouponRepository
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.selectAll
 import java.util.*
+import kotlin.math.max
 
-class OrderRepositoryImpl : OrderRepository {
+class OrderRepositoryImpl(
+    private val couponRepository: CouponRepository
+) : OrderRepository {
 
-    override suspend fun createOrder(userId: String, cartItems: List<CartItem>, shippingAddress: Address): Order = dbQuery {
+    override suspend fun createOrder(
+        userId: String,
+        cartItems: List<CartItem>,
+        shippingAddress: Address,
+        couponCode: String?
+    ): Order = dbQuery {
         if (cartItems.isEmpty()) throw BadRequestException("Cannot create an order from an empty cart.")
 
         val productIds = cartItems.map { it.productId }
@@ -23,44 +32,72 @@ class OrderRepositoryImpl : OrderRepository {
             throw ConflictException("One or more products in the cart are no longer available.")
         }
 
-        // Verify stock before processing the order
+        var subtotal = 0.0
         for (cartItem in cartItems) {
             val productData = productsFromDb[cartItem.productId]
-            if (productData == null || productData[ProductsTable.currentStock] < cartItem.quantity) {
-                throw ConflictException("Insufficient stock for product with ID ${cartItem.productId}")
+                ?: throw ConflictException("Product with ID ${cartItem.productId} not found.")
+            if (productData[ProductsTable.currentStock] < cartItem.quantity) {
+                throw ConflictException("Insufficient stock for product: ${productData[ProductsTable.name]}")
             }
+            subtotal += (productData[ProductsTable.salePrice] ?: productData[ProductsTable.price]) * cartItem.quantity
         }
 
-        var total = 0.0
+        var finalTotal = subtotal
+        var discountAmount = 0.0
+        var validatedCoupon: Coupon? = null
+
+        if (!couponCode.isNullOrBlank()) {
+            val coupon = couponRepository.findActiveCouponByCode(couponCode)
+                ?: throw BadRequestException("The coupon code '$couponCode' is not valid or has expired.")
+
+            discountAmount = when (coupon.discountType) {
+                "PERCENTAGE" -> subtotal * (coupon.discountValue / 100.0)
+                "FIXED_AMOUNT" -> coupon.discountValue
+                else -> 0.0
+            }
+            finalTotal = max(0.0, subtotal - discountAmount)
+            validatedCoupon = coupon
+        }
+
         val orderItems = cartItems.map { cartItem ->
             val productData = productsFromDb[cartItem.productId]!!
-            val currentPrice = productData[ProductsTable.price]
-            total += currentPrice * cartItem.quantity
             OrderItem(
                 productId = cartItem.productId,
                 productName = productData[ProductsTable.name],
                 quantity = cartItem.quantity,
-                unitPrice = currentPrice
+                unitPrice = (productData[ProductsTable.salePrice] ?: productData[ProductsTable.price])
             )
         }
 
         val newOrderId = UUID.randomUUID().toString()
         val currentTime = System.currentTimeMillis()
-        val newStatus = "PENDING_PAYMENT"
-
 
         OrdersTable.insert {
             it[id] = newOrderId
             it[this.userId] = userId
             it[orderDate] = currentTime
-            it[status] = newStatus
-            it[this.total] = total
+            it[status] = "PENDING_PAYMENT"
+            it[total] = finalTotal
             it[paymentMethod] = "MERCADO_PAGO"
             it[shippingMethod] = "DEFAULT_SHIPPING"
-            it[this.shippingAddress] = shippingAddress // <-- Just pass the object directly
+            it[this.shippingAddress] = shippingAddress
+            it[this.couponCode] = validatedCoupon?.code
+            it[this.discountAmount] = discountAmount
         }
 
-        // Insert all order items
+        validatedCoupon?.let { coupon ->
+            CouponsTable.update({ CouponsTable.code eq coupon.code }) {
+                with(SqlExpressionBuilder) {
+                    it.update(usageCount, usageCount + 1)
+                }
+            }
+            OrderCouponsTable.insert {
+                it[this.orderId] = newOrderId
+                it[this.couponCode] = coupon.code
+                it[this.discountAmount] = discountAmount
+            }
+        }
+
         OrderItemsTable.batchInsert(orderItems) { item ->
             this[OrderItemsTable.orderId] = newOrderId
             this[OrderItemsTable.productId] = item.productId
@@ -69,7 +106,6 @@ class OrderRepositoryImpl : OrderRepository {
             this[OrderItemsTable.unitPrice] = item.unitPrice
         }
 
-        // Decrease product stock
         for (item in orderItems) {
             ProductsTable.update({ ProductsTable.id eq item.productId }) {
                 with(SqlExpressionBuilder) {
@@ -82,12 +118,15 @@ class OrderRepositoryImpl : OrderRepository {
             id = newOrderId,
             userId = userId,
             orderDate = currentTime,
-            status = newStatus,
-            total = total,
+            status = "PENDING_PAYMENT",
+            total = finalTotal,
             shippingAddress = shippingAddress,
             paymentMethod = "MERCADO_PAGO",
             shippingMethod = "DEFAULT_SHIPPING",
-            items = orderItems
+            mpPreferenceId = null,
+            items = orderItems,
+            couponCode = validatedCoupon?.code,
+            discountAmount = discountAmount
         )
     }
 
@@ -112,7 +151,6 @@ class OrderRepositoryImpl : OrderRepository {
                 )
             }
 
-        // Deserialize the address from JSON string
         val address = row[OrdersTable.shippingAddress]
             ?: throw IllegalStateException("Shipping address is missing for order $orderId")
 
@@ -126,11 +164,12 @@ class OrderRepositoryImpl : OrderRepository {
             paymentMethod = row[OrdersTable.paymentMethod],
             shippingMethod = row[OrdersTable.shippingMethod],
             mpPreferenceId = row[OrdersTable.mpPreferenceId],
-            items = items
+            items = items,
+            couponCode = row[OrdersTable.couponCode],
+            discountAmount = row[OrdersTable.discountAmount]
         )
     }
 
-    // At the end of the OrderRepositoryImpl class
     override suspend fun updateOrderStatus(orderId: String, newStatus: String): Boolean = dbQuery {
         OrdersTable.update({ OrdersTable.id eq orderId }) {
             it[status] = newStatus

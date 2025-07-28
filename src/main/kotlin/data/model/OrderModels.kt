@@ -24,11 +24,13 @@ data class Order(
     val id: String,
     val userId: String,
     val orderDate: Long, // UNIX Timestamp
-    val status: String, // e.g., PENDING_PAYMENT, PAID, PREPARING, SHIPPED, DELIVERED
+    val status: String,
     val total: Double,
-    val shippingAddress: Address, // <-- NEW: Full embedded Address object
+    val shippingAddress: Address,
     val paymentMethod: String,
     val shippingMethod: String,
-    val mpPreferenceId: String? = null, // <-- NEW: Mercado Pago Preference ID
-    val items: List<OrderItem>
+    val mpPreferenceId: String? = null,
+    val items: List<OrderItem>,
+    val couponCode: String? = null,
+    val discountAmount: Double? = null
 )

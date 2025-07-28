@@ -3,6 +3,8 @@ package com.example.di
 import com.example.data.repository.*
 import data.repository.AddressRepository
 import data.repository.AddressRepositoryImpl
+import data.repository.CouponRepository
+import data.repository.CouponRepositoryImpl
 import data.repository.QuestionRepository
 import data.repository.QuestionRepositoryImpl
 import data.repository.ReviewRepository
@@ -19,7 +21,7 @@ val appModule = module {
     single<CategoryRepository> { CategoryRepositoryImpl() }
     single<UserRepository> { UserRepositoryImpl(get()) }
     single<CartRepository> { CartRepositoryImpl() }
-    single<OrderRepository> { OrderRepositoryImpl() }
+    single<OrderRepository> { OrderRepositoryImpl(get()) }
     single<SupplierRepository> { SupplierRepositoryImpl() }
     single<AddressRepository> { AddressRepositoryImpl() }
     single<ReviewRepository> { ReviewRepositoryImpl() }
@@ -30,5 +32,6 @@ val appModule = module {
             get<io.ktor.server.config.ApplicationConfig>().property("mercado_pago.accessToken").getString()
         MercadoPagoService(accessToken)
     }
+    single<CouponRepository> { CouponRepositoryImpl() }
     single<WishlistRepository> { WishlistRepositoryImpl() }
 }

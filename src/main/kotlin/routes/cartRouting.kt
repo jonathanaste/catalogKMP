@@ -15,8 +15,9 @@ fun Route.cartRouting() {
     val repository: CartRepository by inject()
 
     authenticate("auth-jwt") {
+        // Standardized to English: "/cart"
         route("/cart") {
-            // Obtener el carrito del usuario actual
+            // GET /cart - Get the current user's cart
             get {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
@@ -25,8 +26,8 @@ fun Route.cartRouting() {
                 call.respond(cart)
             }
 
-            // Añadir un ítem al carrito
-            post("/agregar") {
+            // Standardized to English: "/cart/add"
+            post("/add") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
                 val item = call.receive<CartItem>()
@@ -35,17 +36,18 @@ fun Route.cartRouting() {
                 call.respond(updatedCart)
             }
 
-            // Quitar un ítem del carrito (usaremos un POST para simplicidad)
-            post("/quitar") {
+            // Standardized to English: "/cart/remove"
+            post("/remove") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
-                val itemToRemove = call.receive<CartItem>() // Esperamos un objeto con el productId a quitar
+                // Expects a body with the productId to remove, e.g., {"productId": "some-id"}
+                val itemToRemove = call.receive<CartItem>()
 
                 val updatedCart = repository.removeFromCart(userId, itemToRemove.productId)
                 call.respond(updatedCart)
             }
 
-            // Vaciar el carrito
+            // DELETE /cart - Clear the entire cart
             delete {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!

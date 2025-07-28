@@ -17,6 +17,7 @@ import com.example.plugins.configureStatusPages
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
+import routes.couponRouting
 import routes.questionRouting
 import routes.reviewRouting
 import routes.supplierRouting
@@ -99,5 +100,6 @@ fun Application.module() {
         questionRouting()
         webhookRouting()
         wishlistRouting()
+        couponRouting()
     }
 }

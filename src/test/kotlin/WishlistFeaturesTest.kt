@@ -47,12 +47,12 @@ class WishlistFeaturesTest {
 
         // --- PART 1: SETUP - Create a product to be added to the wishlist ---
         val adminToken = getAuthToken("admin@example.com", "adminpass")
+        val uniqueSuffix = System.currentTimeMillis()
 
         // Create a temporary category first
-        // Create a temporary category first
         val categoryRequest = CategoryRequest(
-            name = "Wishlist Test Category - ${System.currentTimeMillis()}",
-            imageUrl = "TODO()"
+            name = "Wishlist Test Category - $uniqueSuffix",
+            imageUrl = "http://example.com/wishlist-cat.png" // ADDED
         )
         val category = client.post("/admin/categories") {
             bearerAuth(adminToken)
@@ -62,17 +62,17 @@ class WishlistFeaturesTest {
 
         // Create a unique product for this test run with all fields populated
         val productRequest = ProductRequest(
-            sku = "WISHLIST-SKU-${System.currentTimeMillis()}",
+            sku = "WISHLIST-SKU-$uniqueSuffix",
             name = "Product for Wishlist",
             description = "A dynamic product for testing the wishlist feature.",
             price = 49.99,
-            salePrice = 39.99, // <-- ADDED
+            salePrice = 39.99, // ADDED
             mainImageUrl = "http://example.com/wishlist-product.png",
-            additionalImageUrls = listOf("http://example.com/wishlist-extra.png"), // <-- ADDED
+            additionalImageUrls = listOf("http://example.com/wishlist-extra.png"), // ADDED
             categoryId = category.id,
             currentStock = 50,
-            weightKg = 0.2, // <-- ADDED
-            supplierId = null,
+            weightKg = 0.2, // ADDED
+            supplierId = null, // ADDED
             costPrice = 20.0,
             isConsigned = false
         )
@@ -81,7 +81,6 @@ class WishlistFeaturesTest {
             contentType(ContentType.Application.Json)
             setBody(productRequest)
         }.body<Product>()
-
 
         // --- PART 2: CLIENT LIFECYCLE ---
         // Register and log in a new client user

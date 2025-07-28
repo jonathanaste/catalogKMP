@@ -21,18 +21,17 @@ fun Route.orderRouting() {
     val addressRepository: AddressRepository by inject()
 
     authenticate("auth-jwt") {
-        // Route path updated from "/pedidos" to "/orders" for v2.0 consistency
         route("/orders") {
 
             /**
              * POST /orders/checkout
              * Initiates the checkout process. Creates a PENDING_PAYMENT order,
-             * and prepares to return a payment URL for the frontend.
+             * applies an optional coupon, and prepares to return a payment URL.
              */
             post("/checkout") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
-                val request = call.receive<CheckoutRequest>()
+                val request = call.receive<CheckoutRequest>() // This now contains the optional couponCode
 
                 // 1. Fetch the user's current cart
                 val cart = cartRepository.getCart(userId)
@@ -40,35 +39,26 @@ fun Route.orderRouting() {
                     throw BadRequestException("Cannot checkout with an empty cart.")
                 }
 
-                // 2. Securely fetch the selected shipping address to ensure it belongs to the user
+                // 2. Securely fetch the selected shipping address
                 val shippingAddress = addressRepository.findAddressByIdForUser(userId, request.addressId)
                     ?: throw NotFoundException("Selected address not found or does not belong to the user.")
 
-                // 3. Create the order in the database with the fetched address
-                val newOrder = orderRepository.createOrder(userId, cart.items, shippingAddress)
+                // 3. Create the order, passing the optional coupon code to the repository
+                val newOrder = orderRepository.createOrder(
+                    userId = userId,
+                    cartItems = cart.items,
+                    shippingAddress = shippingAddress,
+                    couponCode = request.couponCode // <-- THE KEY CHANGE IS HERE
+                )
 
-                // 4. Create Payment Preference with Mercado Pago
-                // In a real implementation, you would make an API call here.
-                // val preferenceRequest = MercadoPagoPreferenceRequest(
-                //     items = newOrder.items.map { MercadoPagoItem(it.productName, it.quantity, it.unitPrice) },
-                //     externalReference = newOrder.id, // This is the crucial link
-                //     backUrls = mapOf("success" to "https://yourapp.com/success", "failure" to "https://yourapp.com/failure")
-                // )
-                // val preference = mercadoPagoService.createPreference(preferenceRequest)
+                // 4. Simulate Mercado Pago preference creation
+                val mercadoPagoPreferenceId = "mp-pref-${newOrder.id}"
+                val mercadoPagoInitPoint = "https://mercadopago.com.ar/checkout/v1/redirect?pref_id=$mercadoPagoPreferenceId"
 
-                // For now, we continue to simulate the response.
-                val mercadoPagoPreferenceId = "mp-pref-for-order-${newOrder.id}" // Simulated ID
-                val mercadoPagoInitPoint =
-                    "https://mercadopago.com.ar/checkout/v1/redirect?pref_id=$mercadoPagoPreferenceId"
-
-                // It's good practice to save the preference ID with the order.
-                // orderRepository.setMercadoPagoPreferenceId(newOrder.id, mercadoPagoPreferenceId)
-
-
-                // 5. Clear the user's cart only after the order is successfully created
+                // 5. Clear the user's cart
                 cartRepository.clearCart(userId)
 
-                // 6. Respond with the redirect URL for the payment provider
+                // 6. Respond with the redirect URL
                 call.respond(HttpStatusCode.Created, mapOf("init_point" to mercadoPagoInitPoint))
             }
 
@@ -79,21 +69,19 @@ fun Route.orderRouting() {
             get {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
-
                 val orders = orderRepository.getOrdersForUser(userId)
                 call.respond(orders)
             }
 
             /**
              * GET /orders/{id}
-             * Retrieves details for a specific order, ensuring it belongs to the user.
+             * Retrieves details for a specific order.
              */
             get("{id}") {
                 val principal = call.principal<JWTPrincipal>()!!
                 val userId = principal.getClaim("userId", String::class)!!
                 val orderId = call.parameters["id"] ?: throw BadRequestException("Order ID is missing.")
 
-                // Find the order within the user's own order list for security
                 val order = orderRepository.getOrdersForUser(userId).find { it.id == orderId }
                     ?: throw NotFoundException("Order not found or you do not have permission to view it.")
 
