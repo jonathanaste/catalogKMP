@@ -16,6 +16,7 @@ import security.TokenProvider
 import com.example.plugins.configureStatusPages
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.server.http.content.staticFiles
 import io.ktor.server.plugins.cors.routing.*
 import routes.couponRouting
 import routes.questionRouting
@@ -24,6 +25,7 @@ import routes.supplierRouting
 import routes.userRouting
 import routes.webhookRouting
 import routes.wishlistRouting
+import java.io.File
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -101,5 +103,11 @@ fun Application.module() {
         webhookRouting()
         wishlistRouting()
         couponRouting()
+
+        // Serve static content from the 'uploads' directory
+        // This makes files available at http://localhost:8080/static/file.jpg
+        staticFiles("/static", File("uploads")) {
+            enableAutoHeadResponse()
+        }
     }
 }
