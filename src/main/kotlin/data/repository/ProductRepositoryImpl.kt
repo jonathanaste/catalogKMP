@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.model.*
 import com.example.plugins.BadRequestException
 import com.example.plugins.DatabaseFactory.dbQuery
+import data.model.ProductSummaryResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
@@ -51,7 +52,7 @@ class ProductRepositoryImpl : ProductRepository {
     }
 
     override suspend fun addProduct(request: ProductRequest): Product {
-        // --- VALIDATION ADDED ---
+
         dbQuery {
             val categoryExists = CategoriesTable.selectAll().where { CategoriesTable.id eq request.categoryId }.count() > 0
             if (!categoryExists) {
@@ -98,7 +99,7 @@ class ProductRepositoryImpl : ProductRepository {
     }
 
     override suspend fun updateProduct(id: String, request: ProductRequest): Boolean {
-        // --- VALIDATION ADDED ---
+
         dbQuery {
             val categoryExists = CategoriesTable.selectAll().where { CategoriesTable.id eq request.categoryId }.count() > 0
             if (!categoryExists) {
@@ -127,5 +128,25 @@ class ProductRepositoryImpl : ProductRepository {
 
     override suspend fun deleteProduct(id: String): Boolean = dbQuery {
         ProductsTable.deleteWhere { ProductsTable.id eq id } > 0
+    }
+
+    override suspend fun getAllProductSummaries(): List<ProductSummaryResponse> = dbQuery {
+        (ProductsTable innerJoin CategoriesTable)
+            .selectAll()
+            .map {
+                ProductSummaryResponse(
+                    id = it[ProductsTable.id],
+                    name = it[ProductsTable.name],
+                    price = it[ProductsTable.price],
+                    salePrice = it[ProductsTable.salePrice],
+                    mainImageUrl = it[ProductsTable.mainImageUrl],
+                    averageRating = it[ProductsTable.averageRating],
+                    category = Category(
+                        id = it[CategoriesTable.id],
+                        name = it[CategoriesTable.name],
+                        imageUrl = it[CategoriesTable.imageUrl]
+                    )
+                )
+            }
     }
 }

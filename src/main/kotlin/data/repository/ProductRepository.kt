@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.model.Product
 import com.example.data.model.ProductRequest
 import com.example.data.model.ProductResponse
+import data.model.ProductSummaryResponse
 
 /**
  * Interface for data operations related to products.
@@ -43,4 +44,7 @@ interface ProductRepository {
      * @return True if the deletion was successful, false otherwise.
      */
     suspend fun deleteProduct(id: String): Boolean
+
+    suspend fun getAllProductSummaries(): List<ProductSummaryResponse>
+
 }

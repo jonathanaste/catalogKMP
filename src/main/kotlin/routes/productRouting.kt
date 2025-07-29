@@ -33,6 +33,11 @@ fun Route.productRouting() {
             val product = repository.getProductById(id) ?: throw NotFoundException("Product with id $id not found.")
             call.respond(product)
         }
+
+        get("/summary") {
+            val productSummaries = repository.getAllProductSummaries()
+            call.respond(productSummaries)
+        }
     }
 
     // --- Admin Routes ---
