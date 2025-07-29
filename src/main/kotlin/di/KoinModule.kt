@@ -5,6 +5,8 @@ import data.repository.AddressRepository
 import data.repository.AddressRepositoryImpl
 import data.repository.CouponRepository
 import data.repository.CouponRepositoryImpl
+import data.repository.MarketingRepository
+import data.repository.MarketingRepositoryImpl
 import data.repository.QuestionRepository
 import data.repository.QuestionRepositoryImpl
 import data.repository.ResellerRepository
@@ -37,4 +39,5 @@ val appModule = module {
     single<CouponRepository> { CouponRepositoryImpl() }
     single<WishlistRepository> { WishlistRepositoryImpl() }
     single<ResellerRepository> { ResellerRepositoryImpl(get()) }
+    single<MarketingRepository> { MarketingRepositoryImpl() }
 }
