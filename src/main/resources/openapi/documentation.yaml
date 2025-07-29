@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: "CatalogKMP API v2.0"
-  description: "RESTful API for the CatalogKMP e-commerce platform, including all features for Phase 2 (Community & Specialization)."
-  version: "2.0.0"
+  title: "CatalogKMP API v3.0"
+  description: "RESTful API for the CatalogKMP e-commerce platform, including all features for Phase 3 (Reseller Platform)."
+  version: "3.0.0"
 servers:
   - url: http://localhost:8080
     description: Local Development Server
@@ -12,14 +12,16 @@ tags:
     description: "Endpoints for user registration and login."
   - name: Public Catalog
     description: "Public-facing endpoints for Browse products, categories, reviews, and questions."
+  - name: Social Interaction
+    description: "(Authenticated) Endpoints for posting reviews and questions."
   - name: Account Management
     description: "(Authenticated) Endpoints for managing user profiles, addresses, and wishlists."
   - name: Shopping Cart & Orders
     description: "(Authenticated) Endpoints for cart management, checkout, and order history."
-  - name: Social Interaction
-    description: "(Authenticated) Endpoints for posting reviews and questions."
+  - name: Reseller Portal
+    description: "(Reseller Role Required) Endpoints for resellers to manage their store, dashboard, and customers."
   - name: Administration
-    description: "(Admin Role Required) Endpoints for managing products, categories, suppliers, and coupons."
+    description: "(Admin Role Required) Endpoints for managing products, categories, resellers, and marketing resources."
 
 paths:
   # --- Authentication ---
@@ -51,11 +53,56 @@ paths:
               schema: { type: object, properties: { token: { type: string }, role: { type: string } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  # --- Public Catalog (omitted for brevity, no changes) ---
-  # ... /products, /categories etc. ...
+    # --- Account Management ---
+  /users/me:
+    get:
+      tags: [Account Management]
+      summary: "Get the authenticated user's full profile."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "The user's complete profile, including addresses and reseller info."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/User' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    put:
+      tags: [Account Management]
+      summary: "Update the user's core profile information."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/UserProfileUpdateRequest' } }
+      responses:
+        '200':
+          description: "User profile updated successfully."
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
-  # --- Account Management ---
-  # ... /users/me, /users/me/addresses etc. ...
+  /users/me/addresses:
+    get:
+      tags: [Account Management]
+      summary: "List the user's addresses."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "A list of the user's saved addresses."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Address' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Account Management]
+      summary: "Add a new address."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/AddressRequest' } }
+      responses:
+        '201':
+          description: "Address created successfully."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/Address' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   /wishlist:
     get:
@@ -93,6 +140,91 @@ paths:
           application/json: { schema: { $ref: '#/components/schemas/AddToWishlistRequest' } }
       responses:
         '204': { description: "Item removed successfully." }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # --- Public Catalog & Social Interaction ---
+  /products:
+    get:
+      tags: [Public Catalog]
+      summary: "Get a list of all products."
+      responses:
+        '200':
+          description: "A list of all available products."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ProductResponse' } } }
+
+  /products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Public Catalog]
+      summary: "Get a single product by its ID."
+      responses:
+        '200':
+          description: "The requested product details."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ProductResponse' } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /products/{id}/reviews:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Public Catalog]
+      summary: "Get all reviews for a specific product."
+      responses:
+        '200':
+          description: "A list of reviews."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ProductReview' } } }
+    post:
+      tags: [Social Interaction]
+      summary: "Post a new review for a product."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ReviewRequest' } }
+      responses:
+        '201':
+          description: "Review posted successfully."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ProductReview' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /products/{productId}/questions:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Public Catalog]
+      summary: "Get all questions for a specific product."
+      responses:
+        '200':
+          description: "A list of questions and their answers."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ProductQuestion' } } }
+    post:
+      tags: [Social Interaction]
+      summary: "Post a new question for a product."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/QuestionRequest' } }
+      responses:
+        '201':
+          description: "Question posted successfully."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ProductQuestion' } }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   # --- Shopping Cart & Orders ---
@@ -157,88 +289,326 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
 
-  # ... /orders, /orders/{id} etc. ...
-
-  # --- Administration ---
-  # ... /admin/suppliers, /admin/products etc. ...
-
-  /admin/coupons:
+  # --- Reseller Portal Endpoints ---
+  /reseller/me/store:
     get:
-      tags: [Administration]
-      summary: "Get all discount coupons."
+      tags: [Reseller Portal]
+      summary: "Get the authenticated reseller's store details."
       security: [ { "BearerAuth": [] } ]
       responses:
         '200':
-          description: "A list of all coupons."
+          description: "The reseller's personal store information."
           content:
-            application/json: { type: array, items: { $ref: '#/components/schemas/Coupon' } }
+            application/json: { schema: { $ref: '#/components/schemas/ResellerStoreResponse' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reseller/me/dashboard:
+    get:
+      tags: [Reseller Portal]
+      summary: "Get the authenticated reseller's dashboard statistics."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "A summary of the reseller's sales and commission performance."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ResellerDashboardResponse' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /reseller/me/customers:
+    get:
+      tags: [Reseller Portal]
+      summary: "Get a list of the reseller's customers."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "A list of customers who have purchased through the reseller's link."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ResellerCustomer' } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /reseller/me/resources:
+    get:
+      tags: [Reseller Portal]
+      summary: "Get available marketing resources."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "A list of all available marketing materials."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/MarketingMaterial' } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # --- Administration Endpoints ---
+  /admin/resellers:
+    get:
+      tags: [Administration]
+      summary: "Get a list of all resellers."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "A list of all users with the RESELLER role."
+          content:
+            application/json: { schema: { type: array, items: { $ref: '#/components/schemas/User' } } }
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
       tags: [Administration]
-      summary: "Create a new discount coupon."
+      summary: "Create a new reseller."
       security: [ { "BearerAuth": [] } ]
       requestBody:
         required: true
         content:
-          application/json: { schema: { $ref: '#/components/schemas/CouponCreateRequest' } }
+          application/json: { schema: { $ref: '#/components/schemas/ResellerCreateRequest' } }
       responses:
         '201':
-          description: "Coupon created successfully."
+          description: "Reseller created successfully."
           content:
-            application/json: { schema: { $ref: '#/components/schemas/Coupon' } }
+            application/json: { schema: { $ref: '#/components/schemas/User' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/resellers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Administration]
+      summary: "Get a single reseller by their user ID."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '200':
+          description: "The reseller's user object."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/User' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Administration]
+      summary: "Update a reseller's profile."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ResellerUpdateRequest' } }
+      responses:
+        '200': { description: "Reseller updated successfully." }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Administration]
+      summary: "Delete a reseller."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '204': { description: "Reseller deleted successfully." }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/resources:
+    post:
+      tags: [Administration]
+      summary: "Add a new marketing resource."
+      security: [ { "BearerAuth": [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/MarketingMaterialRequest' } }
+      responses:
+        '201':
+          description: "Resource created successfully."
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/MarketingMaterial' } }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /admin/resources/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    delete:
+      tags: [Administration]
+      summary: "Delete a marketing resource."
+      security: [ { "BearerAuth": [] } ]
+      responses:
+        '204': { description: "Resource deleted successfully." }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+
 components:
-  # ... securitySchemes, responses ...
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: "Authentication information is missing or invalid."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+    Forbidden:
+      description: "Authenticated user does not have sufficient permissions."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+    NotFound:
+      description: "The requested resource could not be found."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
+    Conflict:
+      description: "The request could not be completed due to a conflict with the current state of the resource."
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } }
 
   schemas:
-    # ... ErrorResponse, User, Product etc. ...
-
-    Order:
+    ErrorResponse:
       type: object
       properties:
-        # ... other order properties
-        items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
-        couponCode: { type: string, nullable: true, description: "The coupon code applied to the order." }
-        discountAmount: { type: number, format: double, nullable: true, description: "The monetary value of the discount applied." }
+        message: { type: string }
 
+    # --- AUTH & USER ---
+    RegisterRequest:
+      type: object
+      # ...
+    LoginRequest:
+      type: object
+      # ...
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: string, nullable: true }
+        role: { type: string }
+        addresses: { type: array, items: { $ref: '#/components/schemas/Address' } }
+        resellerProfile:
+          $ref: '#/components/schemas/ResellerProfile'
+          nullable: true
+    Address:
+      type: object
+      # ...
+
+    # --- CATALOG ---
+    ProductResponse:
+      type: object
+      # ...
+    Category:
+      type: object
+      # ...
+    ProductReview:
+      type: object
+      # ...
+    ProductQuestion:
+      type: object
+      # ...
+    ReviewRequest:
+      type: object
+      # ...
+    QuestionRequest:
+      type: object
+      # ...
+
+    # --- CART & ORDER ---
+    ShoppingCart:
+      type: object
+      # ...
+    CartItem:
+      type: object
+      # ...
     CheckoutRequest:
       type: object
-      required: [addressId]
-      properties:
-        addressId: { type: string, description: "The ID of the address to ship to." }
-        couponCode: { type: string, nullable: true, description: "An optional discount coupon code." }
+      # ...
+    Order:
+      type: object
+      # ...
 
-    # --- NEW SCHEMAS ---
-    WishlistResponse:
+    # --- PHASE 3: RESELLER ---
+    ResellerProfile:
       type: object
       properties:
-        product: { $ref: '#/components/schemas/Product' }
-        dateAdded: { type: integer, format: int64, description: "UNIX Timestamp of when the item was added." }
-
-    AddToWishlistRequest:
-      type: object
-      required: [productId]
-      properties:
-        productId: { type: string }
-
-    Coupon:
-      type: object
-      properties:
-        code: { type: string }
-        description: { type: string }
-        discountType: { type: string, enum: [PERCENTAGE, FIXED_AMOUNT] }
-        discountValue: { type: number, format: double }
-        expirationDate: { type: integer, format: int64, nullable: true }
+        userId: { type: string }
+        uniqueStoreSlug: { type: string }
+        commissionRate: { type: number, format: double }
         isActive: { type: boolean }
 
-    CouponCreateRequest:
+    ResellerCreateRequest:
       type: object
-      required: [code, description, discountType, discountValue]
+      required: [email, firstName, lastName, uniqueStoreSlug]
       properties:
-        code: { type: string }
-        description: { type: string }
-        discountType: { type: string, enum: [PERCENTAGE, FIXED_AMOUNT] }
-        discountValue: { type: number, format: double }
-        expirationDate: { type: integer, format: int64, nullable: true }
-        usageLimit: { type: integer, nullable: true }
+        email: { type: string, format: email }
+        firstName: { type: string }
+        lastName: { type: string }
+        phone: { type: string, nullable: true }
+        uniqueStoreSlug: { type: string }
+        commissionRate: { type: number, format: double, nullable: true, default: 20.0 }
+
+    ResellerUpdateRequest:
+      type: object
+      required: [uniqueStoreSlug, commissionRate, isActive]
+      properties:
+        uniqueStoreSlug: { type: string }
+        commissionRate: { type: number, format: double }
+        isActive: { type: boolean }
+
+    ResellerStoreResponse:
+      type: object
+      properties:
+        resellerName: { type: string }
+        uniqueStoreSlug: { type: string }
+        storeUrl: { type: string, format: uri }
+        commissionRate: { type: number, format: double }
+        isActive: { type: boolean }
+
+    ResellerDashboardResponse:
+      type: object
+      properties:
+        totalSalesValue: { type: number, format: double }
+        totalCommissionEarned: { type: number, format: double }
+        attributedOrderCount: { type: integer }
+        salesInCurrentMonth: { type: number, format: double }
+        commissionInCurrentMonth: { type: number, format: double }
+        recentOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimpleOrderSummary'
+
+    SimpleOrderSummary:
+      type: object
+      properties:
+        orderId: { type: string }
+        orderDate: { type: integer, format: int64 }
+        orderTotal: { type: number, format: double }
+        commissionEarned: { type: number, format: double }
+        status: { type: string }
+
+    ResellerCustomer:
+      type: object
+      properties:
+        customerId: { type: string }
+        customerName: { type: string }
+        customerEmail: { type: string, format: email }
+        firstPurchaseDate: { type: integer, format: int64 }
+        totalSpent: { type: number, format: double }
+
+    MarketingMaterial:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        assetUrl: { type: string, format: uri }
+        assetType: { type: string, enum: [IMAGE, BANNER, PDF] }
+        dateAdded: { type: integer, format: int64 }
+
+    MarketingMaterialRequest:
+      type: object
+      required: [title, assetUrl, assetType]
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        assetUrl: { type: string, format: uri }
+        assetType: { type: string, enum: [IMAGE, BANNER, PDF] }

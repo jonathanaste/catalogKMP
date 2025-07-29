@@ -18,8 +18,7 @@ import java.util.*
 class UserRepositoryImpl(private val addressRepository: AddressRepository) : UserRepository {
 
     private fun resultRowToUser(row: ResultRow): User {
-        // --- NEW: Check for and build the ResellerProfile ---
-        val resellerProfile = if (row.hasValue(ResellerProfilesTable.userId)) {
+        val resellerProfile = if (row.getOrNull(ResellerProfilesTable.userId) != null) {
             ResellerProfile(
                 userId = row[ResellerProfilesTable.userId],
                 uniqueStoreSlug = row[ResellerProfilesTable.uniqueStoreSlug],
@@ -37,17 +36,15 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
             lastName = row[UsersTable.lastName],
             phone = row[UsersTable.phone],
             role = row[UsersTable.role],
-            resellerProfile = resellerProfile // Assign the constructed profile
+            resellerProfile = resellerProfile
         )
     }
 
     override suspend fun registerUser(request: RegisterRequest): User? {
-        // This logic remains unchanged for now, as it only registers CLIENTs.
-        // We will later add a separate admin flow to create resellers.
         if (findUserByEmail(request.email) != null) {
             return null
         }
-        return dbQuery {
+        val newUserEmail = dbQuery {
             val insertStatement = UsersTable.insert {
                 it[id] = UUID.randomUUID().toString()
                 it[email] = request.email
@@ -55,21 +52,21 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
                 it[firstName] = request.firstName
                 it[lastName] = request.lastName
                 it[phone] = null
-                it[role] = "CLIENT" // New users are clients by default
+                it[role] = "CLIENT"
             }
-            resultRowToUser(insertStatement.resultedValues!!.first())
+            insertStatement[UsersTable.email]
         }
+        // --- CORRECTED: Call the method directly on the class instance ---
+        return findUserByEmail(newUserEmail)
     }
 
     override suspend fun findUserByEmail(email: String): User? {
         val user = dbQuery {
-            // --- MODIFIED QUERY with LEFT JOIN ---
             (UsersTable leftJoin ResellerProfilesTable)
                 .selectAll().where { UsersTable.email eq email }
                 .map(::resultRowToUser)
                 .singleOrNull()
         }
-        // If user is found, fetch their addresses and attach them to the object
         return user?.copy(addresses = addressRepository.getAddressesForUser(user.id))
     }
 
