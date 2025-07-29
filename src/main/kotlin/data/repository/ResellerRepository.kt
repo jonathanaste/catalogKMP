@@ -2,6 +2,7 @@ package data.repository
 
 import com.example.data.model.User
 import data.model.ResellerCreateRequest
+import data.model.ResellerCustomer
 import data.model.ResellerDashboardResponse
 import data.model.ResellerUpdateRequest
 
@@ -47,4 +48,10 @@ interface ResellerRepository {
      * @return A ResellerDashboardResponse object with the calculated data.
      */
     suspend fun getResellerDashboard(userId: String): ResellerDashboardResponse?
+
+    /**
+     * Retrieves a list of customers who have purchased through the given reseller.
+     * @return A list of ResellerCustomer objects.
+     */
+    suspend fun getCustomersForReseller(resellerId: String): List<ResellerCustomer>
 }
