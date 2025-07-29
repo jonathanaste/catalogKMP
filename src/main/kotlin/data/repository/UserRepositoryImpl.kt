@@ -5,10 +5,9 @@ import com.example.data.model.ResellerProfilesTable
 import com.example.data.model.User
 import com.example.data.model.UsersTable
 import com.example.plugins.DatabaseFactory.dbQuery
-import data.model.ResellerProfile
+import data.mapper.UserMapper
 import data.model.UserProfileUpdateRequest
 import data.repository.AddressRepository
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -16,29 +15,6 @@ import org.mindrot.jbcrypt.BCrypt
 import java.util.*
 
 class UserRepositoryImpl(private val addressRepository: AddressRepository) : UserRepository {
-
-    private fun resultRowToUser(row: ResultRow): User {
-        val resellerProfile = if (row.getOrNull(ResellerProfilesTable.userId) != null) {
-            ResellerProfile(
-                userId = row[ResellerProfilesTable.userId],
-                uniqueStoreSlug = row[ResellerProfilesTable.uniqueStoreSlug],
-                commissionRate = row[ResellerProfilesTable.commissionRate],
-                isActive = row[ResellerProfilesTable.isActive]
-            )
-        } else {
-            null
-        }
-
-        return User(
-            id = row[UsersTable.id],
-            email = row[UsersTable.email],
-            firstName = row[UsersTable.firstName],
-            lastName = row[UsersTable.lastName],
-            phone = row[UsersTable.phone],
-            role = row[UsersTable.role],
-            resellerProfile = resellerProfile
-        )
-    }
 
     override suspend fun registerUser(request: RegisterRequest): User? {
         if (findUserByEmail(request.email) != null) {
@@ -56,7 +32,6 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
             }
             insertStatement[UsersTable.email]
         }
-        // --- CORRECTED: Call the method directly on the class instance ---
         return findUserByEmail(newUserEmail)
     }
 
@@ -64,7 +39,7 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
         val user = dbQuery {
             (UsersTable leftJoin ResellerProfilesTable)
                 .selectAll().where { UsersTable.email eq email }
-                .map(::resultRowToUser)
+                .map(UserMapper::resultRowToUser) // <-- USE the shared mapper
                 .singleOrNull()
         }
         return user?.copy(addresses = addressRepository.getAddressesForUser(user.id))
