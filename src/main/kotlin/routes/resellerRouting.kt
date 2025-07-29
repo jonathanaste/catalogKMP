@@ -116,6 +116,19 @@ fun Route.resellerRouting() {
 
                 call.respond(response)
             }
+
+            /**
+             * GET /reseller/me/dashboard - Get the authenticated reseller's dashboard stats
+             */
+            get("/dashboard") {
+                val principal = call.principal<JWTPrincipal>()!!
+                val userId = principal.getClaim("userId", String::class)!!
+
+                val dashboardData = repository.getResellerDashboard(userId)
+                    ?: throw NotFoundException("Could not generate dashboard for the current reseller.")
+
+                call.respond(dashboardData)
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ package data.repository
 
 import com.example.data.model.User
 import data.model.ResellerCreateRequest
+import data.model.ResellerDashboardResponse
 import data.model.ResellerUpdateRequest
 
 interface ResellerRepository {
@@ -20,25 +21,30 @@ interface ResellerRepository {
      * Finds a single reseller by their user ID.
      * @return The User object with their reseller profile, or null if not found.
      */
-    suspend fun findResellerById(userId: String): User? // <-- ADD THIS
+    suspend fun findResellerById(userId: String): User?
 
     /**
      * Updates a reseller's profile information.
      * @return True if the update was successful, false otherwise.
      */
-    suspend fun updateReseller(userId: String, request: ResellerUpdateRequest): Boolean // <-- ADD THIS
+    suspend fun updateReseller(userId: String, request: ResellerUpdateRequest): Boolean
 
     /**
      * Deletes a user with the RESELLER role.
      * Note: This will also delete their associated profile due to DB constraints.
      * @return True if the deletion was successful, false otherwise.
      */
-    suspend fun deleteReseller(userId: String): Boolean // <-- ADD THIS
+    suspend fun deleteReseller(userId: String): Boolean
 
     /**
      * Finds an active reseller by their unique store slug.
      * @return The User object, or null if no active reseller is found with that slug.
      */
-    suspend fun findActiveResellerBySlug(slug: String): User? // <-- ADD THIS
+    suspend fun findActiveResellerBySlug(slug: String): User?
 
+    /**
+     * Calculates and retrieves the dashboard statistics for a given reseller.
+     * @return A ResellerDashboardResponse object with the calculated data.
+     */
+    suspend fun getResellerDashboard(userId: String): ResellerDashboardResponse?
 }
