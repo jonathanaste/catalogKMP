@@ -1,17 +1,22 @@
 package data.repository
 
+import com.example.data.model.OrdersTable
 import com.example.data.model.ResellerProfilesTable
 import com.example.data.model.User
 import com.example.data.model.UsersTable
 import com.example.data.repository.UserRepository
 import com.example.plugins.DatabaseFactory.dbQuery
 import data.model.ResellerCreateRequest
+import data.model.ResellerDashboardResponse
 import data.model.ResellerProfile
 import data.model.ResellerUpdateRequest
+import data.model.SimpleOrderSummary
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.mindrot.jbcrypt.BCrypt
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.*
 
 class ResellerRepositoryImpl(
@@ -116,5 +121,52 @@ class ResellerRepositoryImpl(
                 UsersTable.selectAll().where { UsersTable.id eq userId }.map { it[UsersTable.email] }.single()
             }
         )
+    }
+
+    override suspend fun getResellerDashboard(userId: String): ResellerDashboardResponse? {
+        // First, get the reseller's commission rate
+        val reseller = findResellerById(userId) ?: return null
+        val commissionRate = reseller.resellerProfile!!.commissionRate / 100.0
+
+        return dbQuery {
+            val allOrdersQuery = OrdersTable.selectAll()
+                .where { OrdersTable.resellerId eq userId and (OrdersTable.status eq "PAID") }
+
+            // Lifetime Stats
+            val totalSalesValue = allOrdersQuery.sumOf { it[OrdersTable.total] }
+            val attributedOrderCount = allOrdersQuery.count().toInt()
+
+            // Current Month Stats
+            val startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+            val salesInCurrentMonth = OrdersTable
+                .selectAll()
+                .where { (OrdersTable.resellerId eq userId) and (OrdersTable.status eq "PAID") and (OrdersTable.orderDate greaterEq startOfMonth) }
+                .sumOf { it[OrdersTable.total] }
+
+            // Recent Orders
+            val recentOrders = OrdersTable
+                .selectAll().where { OrdersTable.resellerId eq userId }
+                .orderBy(OrdersTable.orderDate, SortOrder.DESC)
+                .limit(5)
+                .map {
+                    val orderTotal = it[OrdersTable.total]
+                    SimpleOrderSummary(
+                        orderId = it[OrdersTable.id],
+                        orderDate = it[OrdersTable.orderDate],
+                        orderTotal = orderTotal,
+                        commissionEarned = if (it[OrdersTable.status] == "PAID") orderTotal * commissionRate else 0.0,
+                        status = it[OrdersTable.status]
+                    )
+                }
+
+            ResellerDashboardResponse(
+                totalSalesValue = totalSalesValue,
+                totalCommissionEarned = totalSalesValue * commissionRate,
+                attributedOrderCount = attributedOrderCount,
+                salesInCurrentMonth = salesInCurrentMonth,
+                commissionInCurrentMonth = salesInCurrentMonth * commissionRate,
+                recentOrders = recentOrders
+            )
+        }
     }
 }
