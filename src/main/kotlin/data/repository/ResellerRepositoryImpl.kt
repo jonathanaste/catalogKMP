@@ -7,6 +7,7 @@ import com.example.data.model.UsersTable
 import com.example.data.repository.UserRepository
 import com.example.plugins.DatabaseFactory.dbQuery
 import data.model.ResellerCreateRequest
+import data.model.ResellerCustomer
 import data.model.ResellerDashboardResponse
 import data.model.ResellerProfile
 import data.model.ResellerUpdateRequest
@@ -18,6 +19,7 @@ import org.mindrot.jbcrypt.BCrypt
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.*
+import org.jetbrains.exposed.sql.sum
 
 class ResellerRepositoryImpl(
     private val userRepository: UserRepository
@@ -168,5 +170,34 @@ class ResellerRepositoryImpl(
                 recentOrders = recentOrders
             )
         }
+    }
+
+    override suspend fun getCustomersForReseller(resellerId: String): List<ResellerCustomer> = dbQuery {
+        val totalSpentAlias = OrdersTable.total.sum()
+        val firstPurchaseAlias = OrdersTable.orderDate.min()
+
+        // CORRECTED JOIN and QUERY SYNTAX
+        (OrdersTable innerJoin UsersTable)
+            .slice(
+                UsersTable.id,
+                UsersTable.firstName,
+                UsersTable.lastName,
+                UsersTable.email,
+                totalSpentAlias,
+                firstPurchaseAlias
+            )
+            .selectAll()
+            .where { (OrdersTable.resellerId eq resellerId) and (OrdersTable.status eq "PAID") }
+            .groupBy(UsersTable.id)
+            .orderBy(firstPurchaseAlias, SortOrder.DESC)
+            .map {
+                ResellerCustomer(
+                    customerId = it[UsersTable.id],
+                    customerName = "${it[UsersTable.firstName]} ${it[UsersTable.lastName]}",
+                    customerEmail = it[UsersTable.email],
+                    firstPurchaseDate = it[firstPurchaseAlias] ?: 0L,
+                    totalSpent = it[totalSpentAlias] ?: 0.0
+                )
+            }
     }
 }
