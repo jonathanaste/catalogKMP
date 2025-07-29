@@ -190,3 +190,15 @@ object ResellerProfilesTable : Table("reseller_profiles") {
 
     override val primaryKey = PrimaryKey(userId)
 }
+
+
+object MarketingMaterialsTable : Table("marketing_materials") {
+    val id = varchar("id", 128)
+    val title = varchar("title", 255)
+    val description = text("description").nullable()
+    val assetUrl = varchar("asset_url", 1024)
+    val assetType = varchar("asset_type", 50)
+    val dateAdded = long("date_added")
+
+    override val primaryKey = PrimaryKey(id)
+}

@@ -18,6 +18,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.cors.routing.*
 import routes.couponRouting
+import routes.marketingRouting
 import routes.questionRouting
 import routes.resellerRouting
 import routes.reviewRouting
@@ -103,5 +104,6 @@ fun Application.module() {
         wishlistRouting()
         couponRouting()
         resellerRouting()
+        marketingRouting()
     }
 }
