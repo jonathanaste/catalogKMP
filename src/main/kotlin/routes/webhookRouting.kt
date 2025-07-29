@@ -21,8 +21,8 @@ fun Route.webhookRouting() {
             log.info("Received Mercado Pago notification: $notification")
 
             val action = notification["action"] as? String
-            val data = notification["data"] as? Map<String, String>
-            val paymentId = data?.get("id")
+            val data = notification["data"] as? Map<*, *>
+            val paymentId = data?.get("id") as? String
 
             if (action != "payment.updated" || paymentId == null) {
                 call.respond(HttpStatusCode.BadRequest, "Notification is malformed.")

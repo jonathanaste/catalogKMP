@@ -88,6 +88,7 @@ object OrdersTable : Table("orders") {
     val mpPreferenceId = varchar("mp_preference_id", 255).nullable() // <-- NEW
     val couponCode = varchar("coupon_code", 100).references(CouponsTable.code).nullable()
     val discountAmount = double("discount_amount").nullable()
+    val resellerId = varchar("reseller_id", 128).references(UsersTable.id).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -179,4 +180,13 @@ object OrderCouponsTable : Table("order_coupons") {
     val discountAmount = double("discount_amount")
 
     override val primaryKey = PrimaryKey(orderId, couponCode)
+}
+
+object ResellerProfilesTable : Table("reseller_profiles") {
+    val userId = varchar("user_id", 128).references(UsersTable.id, onDelete = ReferenceOption.CASCADE)
+    val uniqueStoreSlug = varchar("unique_store_slug", 100).uniqueIndex()
+    val commissionRate = double("commission_rate").default(20.0)
+    val isActive = bool("is_active").default(true)
+
+    override val primaryKey = PrimaryKey(userId)
 }

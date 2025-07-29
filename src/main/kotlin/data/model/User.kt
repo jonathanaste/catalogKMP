@@ -1,6 +1,7 @@
 package com.example.data.model
 
 import data.model.Address
+import data.model.ResellerProfile
 import kotlinx.serialization.Serializable
 
 /**
@@ -16,5 +17,6 @@ data class User(
     val lastName: String,  // <-- NEW
     val phone: String?,    // <-- NEW
     val role: String,      // e.g., "CLIENT", "ADMIN", "RESELLER"
-    val addresses: List<Address> = emptyList() // <-- NEW
+    val addresses: List<Address> = emptyList(),
+    val resellerProfile: ResellerProfile? = null
 )

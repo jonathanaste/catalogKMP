@@ -32,5 +32,6 @@ data class Order(
     val mpPreferenceId: String? = null,
     val items: List<OrderItem>,
     val couponCode: String? = null,
-    val discountAmount: Double? = null
+    val discountAmount: Double? = null,
+    val resellerId: String? = null
 )
