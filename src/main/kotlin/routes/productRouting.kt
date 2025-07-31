@@ -42,6 +42,19 @@ fun Route.productRouting() {
 
     // --- Admin Routes ---
     authenticate("auth-jwt") {
+
+        route("/admin/products/{id}") {
+            get {
+                val principal = call.principal<JWTPrincipal>()
+                if (principal?.getClaim("role", String::class) != "ADMIN") {
+                    throw ForbiddenException("Administrator role required.")
+                }
+                val id = call.parameters["id"] ?: throw BadRequestException("Product ID is missing.")
+                val product = repository.getAdminProductById(id) ?: throw NotFoundException("Product with id $id not found.")
+                call.respond(product)
+            }
+        }
+
         route("/admin/products") {
 
             // POST /admin/products - Create a new product

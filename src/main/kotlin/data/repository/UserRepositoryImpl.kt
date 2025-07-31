@@ -20,7 +20,7 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
         if (findUserByEmail(request.email) != null) {
             return null
         }
-        val newUserEmail = dbQuery {
+        return dbQuery {
             val insertStatement = UsersTable.insert {
                 it[id] = UUID.randomUUID().toString()
                 it[email] = request.email
@@ -30,11 +30,20 @@ class UserRepositoryImpl(private val addressRepository: AddressRepository) : Use
                 it[phone] = null
                 it[role] = "CLIENT"
             }
-            insertStatement[UsersTable.email]
+            // CORRECTED: Construct the User object directly and consistently.
+            // Since a new user is a CLIENT, their resellerProfile is null.
+            User(
+                id = insertStatement[UsersTable.id],
+                email = insertStatement[UsersTable.email],
+                firstName = insertStatement[UsersTable.firstName],
+                lastName = insertStatement[UsersTable.lastName],
+                phone = insertStatement[UsersTable.phone],
+                role = insertStatement[UsersTable.role],
+                resellerProfile = null, // Explicitly null for new clients
+                addresses = emptyList() // New users have no addresses yet
+            )
         }
-        return findUserByEmail(newUserEmail)
     }
-
     override suspend fun findUserByEmail(email: String): User? {
         val user = dbQuery {
             (UsersTable leftJoin ResellerProfilesTable)

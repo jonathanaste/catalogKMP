@@ -24,7 +24,8 @@ object UserMapper {
             lastName = row[UsersTable.lastName],
             phone = row[UsersTable.phone],
             role = row[UsersTable.role],
-            resellerProfile = resellerProfile
+            resellerProfile = resellerProfile,
+            addresses = emptyList()
         )
     }
 }

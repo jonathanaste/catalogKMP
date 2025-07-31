@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.model.*
 import com.example.plugins.BadRequestException
 import com.example.plugins.DatabaseFactory.dbQuery
+import data.model.AdminProductResponse
 import data.model.ProductSummaryResponse
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -148,5 +149,27 @@ class ProductRepositoryImpl : ProductRepository {
                     )
                 )
             }
+    }
+
+    override suspend fun getAdminProductById(id: String): AdminProductResponse? = dbQuery {
+        ProductsTable.selectAll().where { ProductsTable.id eq id }
+            .map {
+                AdminProductResponse(
+                    id = it[ProductsTable.id],
+                    sku = it[ProductsTable.sku],
+                    name = it[ProductsTable.name],
+                    description = it[ProductsTable.description],
+                    price = it[ProductsTable.price],
+                    salePrice = it[ProductsTable.salePrice],
+                    mainImageUrl = it[ProductsTable.mainImageUrl],
+                    additionalImageUrls = it.getOrNull(ProductsTable.additionalImageUrls)?.split(",")?.filter { url -> url.isNotBlank() } ?: emptyList(),
+                    categoryId = it[ProductsTable.categoryId],
+                    currentStock = it[ProductsTable.currentStock],
+                    weightKg = it[ProductsTable.weightKg],
+                    supplierId = it[ProductsTable.supplierId], // <-- Key field
+                    costPrice = it[ProductsTable.costPrice],
+                    isConsigned = it[ProductsTable.isConsigned]
+                )
+            }.singleOrNull()
     }
 }

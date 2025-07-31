@@ -3,6 +3,7 @@ package com.example.data.repository
 import com.example.data.model.Product
 import com.example.data.model.ProductRequest
 import com.example.data.model.ProductResponse
+import data.model.AdminProductResponse
 import data.model.ProductSummaryResponse
 
 /**
@@ -47,4 +48,10 @@ interface ProductRepository {
 
     suspend fun getAllProductSummaries(): List<ProductSummaryResponse>
 
+    /**
+     * Finds a single product by its ID, including internal-only fields like supplierId.
+     * This is intended for administrative use.
+     * @return The full [Product] object or null if not found.
+     */
+    suspend fun getAdminProductById(id: String): AdminProductResponse? //
 }

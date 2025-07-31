@@ -85,16 +85,21 @@ class ResellerRepositoryImpl(
             }
     }
 
+
     override suspend fun findResellerById(userId: String): User? {
-        val user = userRepository.findUserByEmail(
-            dbQuery {
-                UsersTable.selectAll().where { UsersTable.id eq userId and (UsersTable.role eq "RESELLER") }
-                    .map { it[UsersTable.email] }
-                    .singleOrNull() ?: return@dbQuery null
-            } ?: return null
-        )
-        // We ensure the user is a reseller and has a profile.
-        return if (user?.role == "RESELLER" && user.resellerProfile != null) user else null
+        // This query now directly checks that the user has the 'RESELLER' role.
+        val userEmail = dbQuery {
+            UsersTable.selectAll()
+                .where { (UsersTable.id eq userId) and (UsersTable.role eq "RESELLER") }
+                .map { it[UsersTable.email] }
+                .singleOrNull()
+        } ?: return null // If no user is found with that ID and role, exit immediately.
+
+        // findUserByEmail will fetch the complete user object with the reseller profile.
+        val user = userRepository.findUserByEmail(userEmail)
+
+        // Final check to ensure the profile exists.
+        return if (user?.resellerProfile != null) user else null
     }
 
     override suspend fun updateReseller(userId: String, request: ResellerUpdateRequest): Boolean = dbQuery {

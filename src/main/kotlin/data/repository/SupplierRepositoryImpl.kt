@@ -1,8 +1,10 @@
 package com.example.data.repository
 
 import com.example.data.model.CreateSupplierRequest
+import com.example.data.model.ProductsTable
 import com.example.data.model.Supplier
 import com.example.data.model.SuppliersTable
+import com.example.plugins.ConflictException
 import com.example.plugins.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -63,6 +65,15 @@ class SupplierRepositoryImpl : SupplierRepository {
     }
 
     override suspend fun deleteSupplier(id: String): Boolean = dbQuery {
+        val existingProducts = ProductsTable.selectAll().where { ProductsTable.supplierId eq id }.count()
+
+        if (existingProducts > 0) {
+            // Throw a specific, catchable exception instead of letting the DB crash.
+            // Our StatusPages plugin will convert this to a 409 Conflict response.
+            throw ConflictException("Cannot delete supplier. Reassign or delete ${existingProducts} associated product(s) first.")
+        }
+
+        // If the check passes, proceed with the deletion
         SuppliersTable.deleteWhere { SuppliersTable.id eq id } > 0
     }
 }
