@@ -39,10 +39,31 @@ class ProductRepositoryImpl : ProductRepository {
         )
     }
 
-    override suspend fun getAllProducts(): List<ProductResponse> = dbQuery {
-        (ProductsTable innerJoin CategoriesTable)
-            .selectAll()
-            .map(::resultRowToProductResponse)
+    override suspend fun getAllProducts(
+        categoryId: String?,
+        supplierId: String?,
+        sortBy: String?,
+        sortOrder: String?
+    ): List<ProductResponse> = dbQuery {
+        val query = (ProductsTable innerJoin CategoriesTable).selectAll()
+
+        categoryId?.let {
+            query.andWhere { ProductsTable.categoryId eq it }
+        }
+
+        supplierId?.let {
+            query.andWhere { ProductsTable.supplierId eq it }
+        }
+
+        val order = if (sortOrder == "desc") SortOrder.DESC else SortOrder.ASC
+        when (sortBy) {
+            "name" -> query.orderBy(ProductsTable.name, order)
+            "price" -> query.orderBy(ProductsTable.price, order)
+            "stock" -> query.orderBy(ProductsTable.currentStock, order)
+            else -> query.orderBy(ProductsTable.name, SortOrder.ASC)
+        }
+
+        query.map(::resultRowToProductResponse)
     }
 
     override suspend fun getProductById(id: String): ProductResponse? = dbQuery {

@@ -12,10 +12,19 @@ import data.model.ProductSummaryResponse
  */
 interface ProductRepository {
     /**
-     * Retrieves all products from the database.
-     * @return A list of all products.
+     * Retrieves all products from the database with optional filtering and sorting.
+     * @param categoryId Optional filter by category ID.
+     * @param supplierId Optional filter by supplier ID.
+     * @param sortBy Optional sorting key (e.g., "name", "price").
+     * @param sortOrder Optional sort order ("asc" or "desc").
+     * @return A list of products.
      */
-    suspend fun getAllProducts(): List<ProductResponse>
+    suspend fun getAllProducts(
+        categoryId: String? = null,
+        supplierId: String? = null,
+        sortBy: String? = null,
+        sortOrder: String? = "asc"
+    ): List<ProductResponse>
 
     /**
      * Finds a single product by its unique ID.

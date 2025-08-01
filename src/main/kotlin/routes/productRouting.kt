@@ -22,7 +22,12 @@ fun Route.productRouting() {
         // GET /products - Get all products (Public)
         get {
             // The repository now directly returns the correct Product DTO.
-            val products = repository.getAllProducts()
+            val categoryId = call.request.queryParameters["categoryId"]
+            val supplierId = call.request.queryParameters["supplierId"]
+            val sortBy = call.request.queryParameters["sortBy"]
+            val sortOrder = call.request.queryParameters["sortOrder"]
+
+            val products = repository.getAllProducts(categoryId, supplierId, sortBy, sortOrder)
             call.respond(products)
         }
 
